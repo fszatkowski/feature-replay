@@ -6,7 +6,7 @@ from avalanche.benchmarks import SplitCIFAR100, SplitMNIST
 from avalanche.training.supervised import Naive
 
 from config import TDictConfig
-from eval.plugin import get_eval_plugin
+from plugins.eval import get_eval_plugin
 from models.mlp import MLP
 
 ROOT = Path(__file__).parent.parent
@@ -54,6 +54,8 @@ def run(cfg: TDictConfig):
             device=cfg.device,
             evaluator=get_eval_plugin(cfg),
         )
+    elif cfg.strategy == "BasicBufferedReplay":
+        ...
     else:
         raise NotImplementedError()
 
