@@ -1,0 +1,22 @@
+benchmark:
+  name: SplitMNIST
+  input_size: 784
+  n_classes: 10
+  n_experiences: 5
+strategy: Naive
+model:
+  name: MLP
+  hidden_sizes: [ 512 ]
+  dropout_ratio: 0.5
+optimizer:
+  name: SGD
+  lr: 0.001
+  momentum: 0.9
+training:
+  train_epochs: 5
+  train_mb_size: 128
+  eval_mb_size: 128
+seed: 0
+device: cuda
+device_id: 0
+wandb_project: feature-replay
