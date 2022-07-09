@@ -31,7 +31,9 @@ class MLP(nn.Module, BaseModel):
         ):
             layers.add_module(
                 f"fc{layer_idx}",
-                HiddenLayer(in_size=in_size, out_size=out_size, dropout_ratio=dropout_ratio),
+                HiddenLayer(
+                    in_size=in_size, out_size=out_size, dropout_ratio=dropout_ratio
+                ),
             )
         layers.add_module("classifier", nn.Linear(hidden_sizes[-1], num_classes))
         self.layers = layers

@@ -12,10 +12,14 @@ from models.mlp import MLP
 ROOT = Path(__file__).parent.parent
 
 
-@hydra.main(config_path=str(ROOT / "config"), config_name="config.yaml", version_base="1.2")
+@hydra.main(
+    config_path=str(ROOT / "config"), config_name="config.yaml", version_base="1.2"
+)
 def run(cfg: TDictConfig):
     if cfg.benchmark.name == "CIFAR100":
-        benchmark = SplitCIFAR100(n_experiences=cfg.benchmark.n_experiences, seed=cfg.seed)
+        benchmark = SplitCIFAR100(
+            n_experiences=cfg.benchmark.n_experiences, seed=cfg.seed
+        )
     elif cfg.benchmark.name == "SplitMNIST":
         benchmark = SplitMNIST(n_experiences=cfg.benchmark.n_experiences, seed=cfg.seed)
     else:
