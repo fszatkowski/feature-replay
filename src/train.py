@@ -3,13 +3,11 @@ from pathlib import Path
 import hydra
 import torch
 from avalanche.benchmarks import SplitCIFAR100, SplitMNIST
-from avalanche.training.plugins import ReplayPlugin
-from avalanche.training.storage_policy import ReservoirSamplingBuffer
 from avalanche.training.supervised import Naive
 
 from config import TDictConfig
-from models.mlp import MLP
 from plugins.eval import get_eval_plugin
+from models.mlp import MLP
 
 ROOT = Path(__file__).parent.parent
 
@@ -56,22 +54,8 @@ def run(cfg: TDictConfig):
             device=cfg.device,
             evaluator=get_eval_plugin(cfg),
         )
-    elif cfg.strategy == "BasicBuffer":
-        replay_plugin = ReplayPlugin(
-            mem_size=cfg.replay.buffer_size,
-            storage_policy=ReservoirSamplingBuffer(max_size=cfg.replay.buffer_size),
-        )
-        strategy = Naive(
-            model=model,
-            optimizer=optimizer,
-            criterion=criterion,
-            train_epochs=cfg.training.train_epochs,
-            train_mb_size=cfg.training.train_mb_size,
-            eval_mb_size=cfg.training.eval_mb_size,
-            device=cfg.device,
-            plugins=[replay_plugin],
-            evaluator=get_eval_plugin(cfg),
-        )
+    elif cfg.strategy == "BasicBufferedReplay":
+        ...
     else:
         raise NotImplementedError()
 
