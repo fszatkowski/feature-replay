@@ -38,7 +38,7 @@ jobs:
       - name: Check code formatting
         run: |
           black --check src tests
-          isort --check src tests
+          isort --profile black --check src tests
 
       - name: Check linting
         run: |
