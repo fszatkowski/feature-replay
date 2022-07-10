@@ -11,6 +11,11 @@ class Benchmark:
 
 
 @dataclass
+class Replay:
+    buffer_size: int
+
+
+@dataclass
 class Model:
     name: str
     hidden_sizes: list[int]
@@ -36,6 +41,7 @@ class TDictConfig:
     # basic parameters
     benchmark: Benchmark
     strategy: str
+    replay: Replay
     model: Model
     optimizer: Optimizer
     training: Training
