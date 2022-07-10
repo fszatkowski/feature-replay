@@ -1,23 +1,21 @@
-benchmark:
-  name: SplitMNIST
-  input_size: 784
-  n_classes: 10
-  n_experiences: 5
-strategy: BasicBuffer
-replay:
-  buffer_size: 200
-model:
-  name: MLP
-  hidden_sizes: [ 512 ]
-  dropout_ratio: 0.5
-optimizer:
-  name: SGD
-  lr: 0.001
-  momentum: 0.9
+defaults:
+  - _self_
+  - benchmark:
+    - split_mnist
+  - strategy:
+    - naive
+  - model:
+    - mlp
+
 training:
   train_epochs: 5
   train_mb_size: 128
   eval_mb_size: 128
+  optimizer:
+    name: SGD
+    lr: 0.001
+    momentum: 0.9
+
 seed: 0
 device: cuda
 device_id: 0

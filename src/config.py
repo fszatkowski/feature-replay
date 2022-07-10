@@ -11,13 +11,18 @@ class Benchmark:
 
 
 @dataclass
-class Replay:
+class Strategy:
+    name: str
+
+    # Buffer strategies
     buffer_size: int
 
 
 @dataclass
 class Model:
     name: str
+
+    # MLP
     hidden_sizes: list[int]
     dropout_ratio: float
 
@@ -34,18 +39,16 @@ class Training:
     train_epochs: int
     train_mb_size: int
     eval_mb_size: int
+    optimizer: Optimizer
 
 
 @dataclass
-class TDictConfig:
-    # basic parameters
+class Config:
     benchmark: Benchmark
-    strategy: str
-    replay: Replay
+    strategy: Strategy
     model: Model
-    optimizer: Optimizer
     training: Training
+
     seed: Optional[int]
     device: str
-    device_id: int
     wandb_project: str

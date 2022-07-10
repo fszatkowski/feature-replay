@@ -1,0 +1,4 @@
+name: SplitMNIST
+input_size: 784
+n_classes: 10
+n_experiences: 5

@@ -8,11 +8,11 @@ from avalanche.evaluation.metrics import (
 from avalanche.logging import InteractiveLogger, WandBLogger
 from avalanche.training.plugins import EvaluationPlugin
 
-from config import TDictConfig
+from config import Config
 
 
-def get_eval_plugin(cfg: TDictConfig) -> EvaluationPlugin:
-    run_name = f"{cfg.benchmark.name}_{cfg.strategy}_{cfg.model.name}"
+def get_eval_plugin(cfg: Config) -> EvaluationPlugin:
+    run_name = f"{cfg.benchmark.name}_{cfg.strategy.name}_{cfg.model.name}"
     cfg_dict = omegaconf.OmegaConf.to_container(
         cfg, resolve=True, throw_on_missing=True
     )
