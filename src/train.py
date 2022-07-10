@@ -7,7 +7,7 @@ from avalanche.training.plugins import ReplayPlugin
 from avalanche.training.storage_policy import ReservoirSamplingBuffer
 from avalanche.training.supervised import Naive
 
-from config import TDictConfig
+from config import Config
 from models.mlp import MLP
 from plugins.eval import get_eval_plugin
 
@@ -17,7 +17,7 @@ ROOT = Path(__file__).parent.parent
 @hydra.main(
     config_path=str(ROOT / "config"), config_name="config.yaml", version_base="1.2"
 )
-def run(cfg: TDictConfig):
+def run(cfg: Config):
     if cfg.benchmark.name == "CIFAR100":
         benchmark = SplitCIFAR100(
             n_experiences=cfg.benchmark.n_experiences, seed=cfg.seed
@@ -37,15 +37,17 @@ def run(cfg: TDictConfig):
     else:
         raise NotImplementedError()
 
-    if cfg.optimizer.name == "SGD":
+    if cfg.training.optimizer.name == "SGD":
         optimizer = torch.optim.SGD(
-            model.parameters(), lr=cfg.optimizer.lr, momentum=cfg.optimizer.momentum
+            model.parameters(),
+            lr=cfg.training.optimizer.lr,
+            momentum=cfg.training.optimizer.momentum,
         )
     else:
         raise NotImplementedError()
     criterion = torch.nn.CrossEntropyLoss()
 
-    if cfg.strategy == "Naive":
+    if cfg.strategy.name == "Naive":
         strategy = Naive(
             model=model,
             optimizer=optimizer,
@@ -56,10 +58,10 @@ def run(cfg: TDictConfig):
             device=cfg.device,
             evaluator=get_eval_plugin(cfg),
         )
-    elif cfg.strategy == "BasicBuffer":
+    elif cfg.strategy.name == "BasicBuffer":
         replay_plugin = ReplayPlugin(
-            mem_size=cfg.replay.buffer_size,
-            storage_policy=ReservoirSamplingBuffer(max_size=cfg.replay.buffer_size),
+            mem_size=cfg.strategy.buffer_size,
+            storage_policy=ReservoirSamplingBuffer(max_size=cfg.strategy.buffer_size),
         )
         strategy = Naive(
             model=model,
