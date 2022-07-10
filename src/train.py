@@ -1,6 +1,8 @@
+import random
 from pathlib import Path
 
 import hydra
+import numpy as np
 import torch
 from avalanche.benchmarks import SplitCIFAR100, SplitMNIST
 from avalanche.training.plugins import ReplayPlugin
@@ -18,6 +20,13 @@ ROOT = Path(__file__).parent.parent
     config_path=str(ROOT / "config"), config_name="config.yaml", version_base="1.2"
 )
 def run(cfg: Config):
+    if cfg.seed is not None:
+        torch.manual_seed(cfg.seed)
+        torch.use_deterministic_algorithms(True)
+        torch.backends.cudnn.benchmark = False
+        random.seed(cfg.seed)
+        np.random.seed(cfg.seed)
+
     if cfg.benchmark.name == "CIFAR100":
         benchmark = SplitCIFAR100(
             n_experiences=cfg.benchmark.n_experiences, seed=cfg.seed
