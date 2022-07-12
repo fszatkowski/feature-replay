@@ -1,11 +1,12 @@
 from typing import Optional
 
 import torch.nn as nn
-from avalanche.models.base_model import BaseModel
 from torch import Tensor
 
+from models.feature_replay_model import FeatureReplayModel
 
-class MLP(nn.Module, BaseModel):
+
+class MLP(FeatureReplayModel):
     def __init__(
         self,
         num_classes: int = 10,
@@ -38,10 +39,8 @@ class MLP(nn.Module, BaseModel):
         layers.add_module("classifier", nn.Linear(hidden_sizes[-1], num_classes))
         self.layers = layers
 
-        self._input_size = input_size
-
     def forward(self, x: Tensor, skip_first: int = 0, skip_last: int = 0) -> Tensor:
-        if len(self.layers) - skip_last - skip_first <= 0:
+        if len(self.layers) - skip_last - skip_first < 0:
             raise ValueError()
 
         x = x.contiguous()
@@ -53,6 +52,9 @@ class MLP(nn.Module, BaseModel):
 
     def get_features(self, x: Tensor) -> Tensor:
         return self.forward(x, skip_last=1)
+
+    def n_layers(self) -> int:
+        return len(self.layers)
 
 
 class HiddenLayer(nn.Module):

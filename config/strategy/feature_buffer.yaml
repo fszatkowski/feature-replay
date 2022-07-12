@@ -1,0 +1,3 @@
+name: FeatureBuffer
+buffer_sizes: [200,200]
+replay_batch_sizes: 8

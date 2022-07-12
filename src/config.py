@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union
 
 
 @dataclass
@@ -14,8 +14,12 @@ class Benchmark:
 class Strategy:
     name: str
 
-    # Buffer strategies
+    # BasicBuffer strategy
     buffer_size: int
+
+    # FeatureBuffer strategy
+    buffer_sizes: list[int]
+    replay_batch_sizes: Union[int, list[int]]
 
 
 @dataclass

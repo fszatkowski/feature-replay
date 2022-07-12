@@ -11,7 +11,9 @@ from avalanche.training.supervised import Naive
 
 from config import Config
 from models.mlp import MLP
+from plugins.buffered_feature_replay import BufferedFeatureReplayPlugin
 from plugins.eval import get_eval_plugin
+from strategies.buffered_feature_replay import BufferedFeatureReplayStrategy
 
 ROOT = Path(__file__).parent.parent
 
@@ -22,7 +24,7 @@ ROOT = Path(__file__).parent.parent
 def run(cfg: Config):
     if cfg.seed is not None:
         torch.manual_seed(cfg.seed)
-        torch.use_deterministic_algorithms(True)
+        # torch.use_deterministic_algorithms(True)
         torch.backends.cudnn.benchmark = False
         random.seed(cfg.seed)
         np.random.seed(cfg.seed)
@@ -67,6 +69,7 @@ def run(cfg: Config):
             device=cfg.device,
             evaluator=get_eval_plugin(cfg),
         )
+
     elif cfg.strategy.name == "BasicBuffer":
         replay_plugin = ReplayPlugin(
             mem_size=cfg.strategy.buffer_size,
@@ -83,6 +86,42 @@ def run(cfg: Config):
             plugins=[replay_plugin],
             evaluator=get_eval_plugin(cfg),
         )
+
+    elif cfg.strategy.name == "FeatureBuffer":
+        assert len(cfg.strategy.buffer_sizes) == model.n_layers()
+
+        if isinstance(cfg.strategy.replay_batch_sizes, int):
+            replay_batch_sizes = [
+                cfg.strategy.replay_batch_sizes
+                for _ in range(len(cfg.strategy.buffer_sizes))
+            ]
+        else:
+            replay_batch_sizes = cfg.strategy.replay_batch_sizes
+
+        replay_plugins = []
+        for feature_level, (buffer_size, batch_size) in enumerate(
+            zip(cfg.strategy.buffer_sizes, replay_batch_sizes)
+        ):
+            if buffer_size > 0:
+                plugin = BufferedFeatureReplayPlugin(
+                    memory_size=buffer_size,
+                    batch_size=batch_size,
+                    feature_level=feature_level,
+                )
+                replay_plugins.append(plugin)
+
+        strategy = BufferedFeatureReplayStrategy(
+            model=model,
+            optimizer=optimizer,
+            criterion=criterion,
+            train_epochs=cfg.training.train_epochs,
+            train_mb_size=cfg.training.train_mb_size,
+            eval_mb_size=cfg.training.eval_mb_size,
+            device=cfg.device,
+            plugins=replay_plugins,
+            evaluator=get_eval_plugin(cfg),
+        )
+
     else:
         raise NotImplementedError()
 
