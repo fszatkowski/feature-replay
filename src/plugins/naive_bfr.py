@@ -7,10 +7,10 @@ from avalanche.core import SupervisedPlugin
 from torch import Tensor
 from torch.utils.data import DataLoader, Subset, TensorDataset
 
-from strategies.buffered_feature_replay import BufferedFeatureReplayStrategy
+from strategies.naive_bfr import NaiveBufferedFeatureReplayStrategy
 
 
-class BufferedFeatureReplayPlugin(SupervisedPlugin):
+class NaiveBufferedFeatureReplayPlugin(SupervisedPlugin):
     def __init__(self, memory_size: int, batch_size: int, feature_level: int):
         """
         Buffer containing features for replay. After each experience, adds features obtained for
@@ -32,7 +32,7 @@ class BufferedFeatureReplayPlugin(SupervisedPlugin):
         self.main_data_loader_replay_steps: set[int] = set()
 
     def after_training_iteration(
-        self, strategy: BufferedFeatureReplayStrategy, *args, **kwargs
+        self, strategy: NaiveBufferedFeatureReplayStrategy, *args, **kwargs
     ) -> None:
         """Replay data on selected training steps"""
         # If DataLoader is None no buffer was yet obtained
@@ -55,7 +55,7 @@ class BufferedFeatureReplayPlugin(SupervisedPlugin):
         self.main_data_loader_step += 1
 
     def after_training_exp(
-        self, strategy: BufferedFeatureReplayStrategy, *args, **kwargs
+        self, strategy: NaiveBufferedFeatureReplayStrategy, *args, **kwargs
     ) -> None:
         """Update the buffer"""
         dataset = strategy.experience.dataset
@@ -105,7 +105,7 @@ class BufferedFeatureReplayPlugin(SupervisedPlugin):
             ] = self.experience_id_to_examples[experience_id - i][:-1]
 
     def before_training_epoch(
-        self, strategy: BufferedFeatureReplayStrategy, *args, **kwargs
+        self, strategy: NaiveBufferedFeatureReplayStrategy, *args, **kwargs
     ) -> None:
         """
         Create Iterator over replay DataLoader after each epoch.

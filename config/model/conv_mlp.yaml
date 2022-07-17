@@ -1,0 +1,6 @@
+name: ConvMLP
+channels: [8, 16, 32]
+pooling: true
+kernel_size: 3
+hidden_sizes: [ 256 ]
+dropout_ratio: 0.5

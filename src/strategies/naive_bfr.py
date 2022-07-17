@@ -10,7 +10,7 @@ from torch.optim import Optimizer
 from models.feature_replay_model import FeatureReplayModel
 
 
-class BufferedFeatureReplayStrategy(SupervisedTemplate):
+class NaiveBufferedFeatureReplayStrategy(SupervisedTemplate):
     def __init__(
         self,
         model: FeatureReplayModel,

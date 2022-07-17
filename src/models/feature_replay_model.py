@@ -7,6 +7,7 @@ from torch import Tensor, nn
 class FeatureReplayModel(nn.Module, BaseModel):
     def __init__(self):
         super().__init__()
+        self.layers = nn.Sequential()
 
     @abstractmethod
     def forward(self, x: Tensor, skip_first: int = 0, skip_last: int = 0) -> Tensor:

@@ -1,4 +1,4 @@
 name: CIFAR100
-input_size: 3072
+input_size: [3,32,32]
 n_classes: 100
 n_experiences: 10

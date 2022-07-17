@@ -5,7 +5,7 @@ from typing import Optional, Union
 @dataclass
 class Benchmark:
     name: str
-    input_size: int
+    input_size: tuple[int, int, int]
     n_classes: int
     n_experiences: int
 
@@ -15,11 +15,12 @@ class Strategy:
     name: str
 
     # BasicBuffer strategy
-    buffer_size: int
+    memory_size: Union[int, list[int]]
 
     # FeatureBuffer strategy
-    buffer_sizes: list[int]
-    replay_batch_sizes: Union[int, list[int]]
+    replay_mb_size: Union[int, list[int]]
+    replay_prob: Optional[Union[float, list[float]]]
+    replay_slowdown: float
 
 
 @dataclass
@@ -29,6 +30,11 @@ class Model:
     # MLP
     hidden_sizes: list[int]
     dropout_ratio: float
+
+    # ConvMLP
+    channels: list[int]
+    kernel_size: int
+    pooling: bool
 
 
 @dataclass

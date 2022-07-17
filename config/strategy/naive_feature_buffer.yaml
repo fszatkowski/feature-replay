@@ -1,0 +1,3 @@
+name: NaiveFeatureBuffer
+memory_size: 200
+replay_mb_size: 32
