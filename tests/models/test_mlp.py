@@ -1,15 +1,6 @@
 import torch
 
-from models.mlp import MLP, HiddenLayer
-
-
-def test_hidden_layer() -> None:
-    layer = HiddenLayer(10, 20, 0.5)
-    x = torch.rand((4, 10))
-
-    y = layer(x)
-
-    assert y.shape == (4, 20)
+from models.mlp import MLP
 
 
 def test_mlp_skip_first_inference() -> None:

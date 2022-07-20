@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union
 
 
 @dataclass
 class Benchmark:
     name: str
-    input_size: int
+    input_size: tuple[int, int, int]
     n_classes: int
     n_experiences: int
 
@@ -14,8 +14,13 @@ class Benchmark:
 class Strategy:
     name: str
 
-    # Buffer strategies
-    buffer_size: int
+    # BasicBuffer strategy
+    memory_size: Union[int, list[int]]
+
+    # FeatureBuffer strategy
+    replay_mb_size: Union[int, list[int]]
+    replay_prob: Optional[Union[float, list[float]]]
+    replay_slowdown: float
 
 
 @dataclass
@@ -25,6 +30,11 @@ class Model:
     # MLP
     hidden_sizes: list[int]
     dropout_ratio: float
+
+    # ConvMLP
+    channels: list[int]
+    kernel_size: int
+    pooling: bool
 
 
 @dataclass

@@ -7,11 +7,15 @@ import torch
 from avalanche.benchmarks import SplitCIFAR100, SplitMNIST
 from avalanche.training.plugins import ReplayPlugin
 from avalanche.training.storage_policy import ReservoirSamplingBuffer
-from avalanche.training.supervised import Naive
+from avalanche.training.supervised import JointTraining, Naive
 
 from config import Config
+from models.conv_mlp import ConvMLP
 from models.mlp import MLP
 from plugins.eval import get_eval_plugin
+from plugins.naive_bfr import NaiveBufferedFeatureReplayPlugin
+from strategies.bfr import BufferedFeatureReplayStrategy
+from strategies.naive_bfr import NaiveBufferedFeatureReplayStrategy
 
 ROOT = Path(__file__).parent.parent
 
@@ -22,7 +26,7 @@ ROOT = Path(__file__).parent.parent
 def run(cfg: Config):
     if cfg.seed is not None:
         torch.manual_seed(cfg.seed)
-        torch.use_deterministic_algorithms(True)
+        # torch.use_deterministic_algorithms(True)
         torch.backends.cudnn.benchmark = False
         random.seed(cfg.seed)
         np.random.seed(cfg.seed)
@@ -37,9 +41,22 @@ def run(cfg: Config):
         raise NotImplementedError()
 
     if cfg.model.name == "MLP":
+        input_size = 1
+        for size in cfg.benchmark.input_size:
+            input_size *= size
         model = MLP(
+            input_size=input_size,
+            num_classes=cfg.benchmark.n_classes,
+            hidden_sizes=cfg.model.hidden_sizes,
+            dropout_ratio=cfg.model.dropout_ratio,
+        )
+    elif cfg.model.name == "ConvMLP":
+        model = ConvMLP(
             input_size=cfg.benchmark.input_size,
             num_classes=cfg.benchmark.n_classes,
+            channels=cfg.model.channels,
+            kernel_size=cfg.model.kernel_size,
+            pooling=cfg.model.pooling,
             hidden_sizes=cfg.model.hidden_sizes,
             dropout_ratio=cfg.model.dropout_ratio,
         )
@@ -67,10 +84,11 @@ def run(cfg: Config):
             device=cfg.device,
             evaluator=get_eval_plugin(cfg),
         )
+
     elif cfg.strategy.name == "BasicBuffer":
         replay_plugin = ReplayPlugin(
-            mem_size=cfg.strategy.buffer_size,
-            storage_policy=ReservoirSamplingBuffer(max_size=cfg.strategy.buffer_size),
+            mem_size=cfg.strategy.memory_size,
+            storage_policy=ReservoirSamplingBuffer(max_size=cfg.strategy.memory_size),
         )
         strategy = Naive(
             model=model,
@@ -81,6 +99,77 @@ def run(cfg: Config):
             eval_mb_size=cfg.training.eval_mb_size,
             device=cfg.device,
             plugins=[replay_plugin],
+            evaluator=get_eval_plugin(cfg),
+        )
+
+    elif cfg.strategy.name == "NaiveFeatureBuffer":
+        if isinstance(cfg.strategy.memory_size, list):
+            assert len(cfg.strategy.memory_size) == model.n_layers()
+            memory_sizes = cfg.strategy.memory_size
+        else:
+            memory_sizes = [cfg.strategy.memory_size for _ in range(model.n_layers())]
+
+        if isinstance(cfg.strategy.replay_mb_size, int):
+            replay_batch_sizes = [
+                cfg.strategy.replay_mb_size for _ in range(len(memory_sizes))
+            ]
+        else:
+            assert len(cfg.strategy.replay_mb_size) == model.n_layers()
+            replay_batch_sizes = cfg.strategy.replay_mb_size
+
+        replay_plugins = []
+        for feature_level, (buffer_size, batch_size) in enumerate(
+            zip(memory_sizes, replay_batch_sizes)
+        ):
+            if buffer_size > 0:
+                plugin = NaiveBufferedFeatureReplayPlugin(
+                    memory_size=buffer_size,
+                    batch_size=batch_size,
+                    feature_level=feature_level,
+                )
+                replay_plugins.append(plugin)
+
+        strategy = NaiveBufferedFeatureReplayStrategy(
+            model=model,
+            optimizer=optimizer,
+            criterion=criterion,
+            train_epochs=cfg.training.train_epochs,
+            train_mb_size=cfg.training.train_mb_size,
+            eval_mb_size=cfg.training.eval_mb_size,
+            device=cfg.device,
+            plugins=replay_plugins,
+            evaluator=get_eval_plugin(cfg),
+        )
+    elif cfg.strategy.name == "JointTraining":
+        if cfg.benchmark.name == "CIFAR100":
+            benchmark = SplitCIFAR100(n_experiences=1, seed=cfg.seed)
+        elif cfg.benchmark.name == "SplitMNIST":
+            benchmark = SplitMNIST(n_experiences=1, seed=cfg.seed)
+        else:
+            raise NotImplementedError()
+
+        strategy = JointTraining(
+            model=model,
+            optimizer=optimizer,
+            criterion=criterion,
+            train_epochs=cfg.training.train_epochs,
+            train_mb_size=cfg.training.train_mb_size,
+            eval_mb_size=cfg.training.eval_mb_size,
+            device=cfg.device,
+            evaluator=get_eval_plugin(cfg),
+        )
+    elif cfg.strategy.name == "FeatureBuffer":
+        strategy = BufferedFeatureReplayStrategy(
+            model=model,
+            replay_memory_sizes=cfg.strategy.memory_size,
+            replay_mb_sizes=cfg.strategy.replay_mb_size,
+            replay_probs=cfg.strategy.replay_prob,
+            replay_slowdown=cfg.strategy.replay_slowdown,
+            criterion=criterion,
+            train_epochs=cfg.training.train_epochs,
+            train_mb_size=cfg.training.train_mb_size,
+            eval_mb_size=cfg.training.eval_mb_size,
+            device=cfg.device,
             evaluator=get_eval_plugin(cfg),
         )
     else:

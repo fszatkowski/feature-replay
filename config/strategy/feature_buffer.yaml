@@ -1,0 +1,5 @@
+name: FeatureBuffer
+memory_size: 200
+replay_mb_size: null
+replay_prob: null
+replay_slowdown: 0.01
