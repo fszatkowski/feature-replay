@@ -141,16 +141,18 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
         n_layers: int,
     ) -> list[Optional[float]]:
         if replay_probs is not None:
-            if isinstance(replay_probs, list):
-                assert len(replay_probs) == n_layers
-                output_replay_probs = [
-                    prob if mem_size != 0 else None
-                    for prob, mem_size in zip(replay_probs, replay_memory_sizes)
-                ]
-            else:
+            if isinstance(replay_probs, float):
                 output_replay_probs = [
                     replay_probs if mem_size != 0 else None
                     for mem_size in replay_memory_sizes
+                ]
+            else:
+                assert len(cast(list[float], replay_probs)) == n_layers
+                output_replay_probs = [
+                    prob if mem_size != 0 else None
+                    for prob, mem_size in zip(
+                        cast(list[float], replay_probs), replay_memory_sizes
+                    )
                 ]
         else:
             tmp_probs = [
