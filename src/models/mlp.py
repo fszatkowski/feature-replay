@@ -32,7 +32,10 @@ class MLP(FeatureReplayModel):
             self.layers.add_module(
                 f"fc{layer_idx}",
                 DenseLayer(
-                    in_size=in_size, out_size=out_size, dropout_ratio=dropout_ratio
+                    in_size=in_size,
+                    out_size=out_size,
+                    activation=True,
+                    dropout_ratio=dropout_ratio,
                 ),
             )
         self.layers.add_module(
@@ -40,6 +43,7 @@ class MLP(FeatureReplayModel):
             DenseLayer(
                 in_size=hidden_sizes[-1],
                 out_size=num_classes,
+                activation=False,
                 dropout_ratio=dropout_ratio,
             ),
         )
