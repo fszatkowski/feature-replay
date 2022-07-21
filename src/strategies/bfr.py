@@ -309,6 +309,8 @@ class FeatureBuffer:
             size_idx = len(new_memory_sizes) - 1
             while sum(new_memory_sizes) > self.memory_size:
                 new_memory_sizes[size_idx] -= 1
+                size_idx -= 1
+            assert sum(new_memory_sizes) == self.memory_size
 
             new_features = []
             new_labels = []
