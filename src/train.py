@@ -14,7 +14,7 @@ from models.conv_mlp import ConvMLP
 from models.mlp import MLP
 from plugins.eval import get_eval_plugin
 from plugins.naive_bfr import NaiveBufferedFeatureReplayPlugin
-from strategies.bfr import BufferedFeatureReplayStrategy
+from strategies.buffered_feature_replay import BufferedFeatureReplayStrategy
 from strategies.naive_bfr import NaiveBufferedFeatureReplayStrategy
 
 ROOT = Path(__file__).parent.parent

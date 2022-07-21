@@ -1,5 +1,5 @@
 [flake8]
-exclude = .venv,.git,__pycache__
+exclude = .venv,.git,__pycache__,wandb
 ignore = E203
 per-file-ignores = __init__.py:F401
 max-line-length = 99
