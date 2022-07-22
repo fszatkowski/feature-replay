@@ -68,6 +68,7 @@ def run(cfg: Config):
             model.parameters(),
             lr=cfg.training.optimizer.lr,
             momentum=cfg.training.optimizer.momentum,
+            weight_decay=cfg.training.optimizer.l2
         )
     else:
         raise NotImplementedError()
