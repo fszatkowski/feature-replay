@@ -62,4 +62,5 @@ class Config:
 
     seed: Optional[int]
     device: str
+    wandb_entity: str
     wandb_project: str

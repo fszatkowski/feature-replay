@@ -4,6 +4,7 @@
 * Create environment with python 3.9
 * Install requirements.txt
 * [Setup Wandb](https://docs.wandb.ai/quickstart)
+* Make sure you have access to project given by `<wandb_entity>/<wandb_project>` from [config](config)
 * Set [src](src) directory as PYTHONPATH
 
 ## Running experiments

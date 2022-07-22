@@ -20,4 +20,5 @@ training:
 seed: 0
 device: cuda
 device_id: 0
+wandb_entity: cl-probing
 wandb_project: feature-replay

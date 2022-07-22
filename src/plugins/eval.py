@@ -1,3 +1,5 @@
+import os
+
 import omegaconf
 from avalanche.evaluation.metrics import (
     accuracy_metrics,
@@ -18,6 +20,7 @@ def get_eval_plugin(cfg: Config) -> EvaluationPlugin:
     )
 
     interactive_logger = InteractiveLogger()
+    os.environ["WANDB_ENTITY"] = cfg.wandb_entity
     wandb_logger = WandBLogger(
         project_name=cfg.wandb_project, run_name=run_name, config=cfg_dict
     )
