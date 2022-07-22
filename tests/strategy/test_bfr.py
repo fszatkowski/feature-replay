@@ -1,6 +1,6 @@
 import pytest
 
-from strategies.bfr import BufferedFeatureReplayStrategy
+from strategies.buffered_feature_replay import BufferedFeatureReplayStrategy
 
 
 def test_get_replay_mb_sizes_from_list() -> None:
@@ -117,4 +117,4 @@ def test_get_replay_probs_from_none_with_empty_memory_sizes() -> None:
         n_layers=4,
     )
 
-    assert replay_probs == [0.5, None, 0.5, None]
+    assert replay_probs == [0.5, 0, 0.5, 0]
