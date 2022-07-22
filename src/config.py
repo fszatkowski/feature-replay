@@ -42,6 +42,7 @@ class Optimizer:
     name: str
     lr: float
     momentum: float
+    l2: float
 
 
 @dataclass

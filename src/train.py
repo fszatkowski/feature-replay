@@ -14,7 +14,7 @@ from models.conv_mlp import ConvMLP
 from models.mlp import MLP
 from plugins.eval import get_eval_plugin
 from plugins.naive_bfr import NaiveBufferedFeatureReplayPlugin
-from strategies.bfr import BufferedFeatureReplayStrategy
+from strategies.buffered_feature_replay import BufferedFeatureReplayStrategy
 from strategies.naive_bfr import NaiveBufferedFeatureReplayStrategy
 
 ROOT = Path(__file__).parent.parent
@@ -68,6 +68,7 @@ def run(cfg: Config):
             model.parameters(),
             lr=cfg.training.optimizer.lr,
             momentum=cfg.training.optimizer.momentum,
+            weight_decay=cfg.training.optimizer.l2
         )
     else:
         raise NotImplementedError()
@@ -166,6 +167,9 @@ def run(cfg: Config):
             replay_probs=cfg.strategy.replay_prob,
             replay_slowdown=cfg.strategy.replay_slowdown,
             criterion=criterion,
+            lr=cfg.training.optimizer.lr,
+            momentum=cfg.training.optimizer.momentum,
+            l2=cfg.training.optimizer.l2,
             train_epochs=cfg.training.train_epochs,
             train_mb_size=cfg.training.train_mb_size,
             eval_mb_size=cfg.training.eval_mb_size,
