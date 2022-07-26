@@ -13,9 +13,7 @@ from config import Config
 from models.conv_mlp import ConvMLP
 from models.mlp import MLP
 from plugins.eval import get_eval_plugin
-from plugins.naive_bfr import NaiveBufferedFeatureReplayPlugin
 from strategies.buffered_feature_replay import BufferedFeatureReplayStrategy
-from strategies.naive_bfr import NaiveBufferedFeatureReplayStrategy
 
 ROOT = Path(__file__).parent.parent
 
@@ -101,45 +99,6 @@ def run(cfg: Config):
             eval_mb_size=cfg.training.eval_mb_size,
             device=cfg.device,
             plugins=[replay_plugin],
-            evaluator=get_eval_plugin(cfg),
-        )
-
-    elif cfg.strategy.name == "NaiveFeatureBuffer":
-        if isinstance(cfg.strategy.memory_size, list):
-            assert len(cfg.strategy.memory_size) == model.n_layers()
-            memory_sizes = cfg.strategy.memory_size
-        else:
-            memory_sizes = [cfg.strategy.memory_size for _ in range(model.n_layers())]
-
-        if isinstance(cfg.strategy.replay_mb_size, int):
-            replay_batch_sizes = [
-                cfg.strategy.replay_mb_size for _ in range(len(memory_sizes))
-            ]
-        else:
-            assert len(cfg.strategy.replay_mb_size) == model.n_layers()
-            replay_batch_sizes = cfg.strategy.replay_mb_size
-
-        replay_plugins = []
-        for feature_level, (buffer_size, batch_size) in enumerate(
-            zip(memory_sizes, replay_batch_sizes)
-        ):
-            if buffer_size > 0:
-                plugin = NaiveBufferedFeatureReplayPlugin(
-                    memory_size=buffer_size,
-                    batch_size=batch_size,
-                    feature_level=feature_level,
-                )
-                replay_plugins.append(plugin)
-
-        strategy = NaiveBufferedFeatureReplayStrategy(
-            model=model,
-            optimizer=optimizer,
-            criterion=criterion,
-            train_epochs=cfg.training.train_epochs,
-            train_mb_size=cfg.training.train_mb_size,
-            eval_mb_size=cfg.training.eval_mb_size,
-            device=cfg.device,
-            plugins=replay_plugins,
             evaluator=get_eval_plugin(cfg),
         )
     elif cfg.strategy.name == "JointTraining":
