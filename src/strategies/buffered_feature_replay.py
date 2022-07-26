@@ -146,6 +146,9 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
                     param_group["lr"] *= self.replay_slowdown
 
             else:
+                if self.clock.train_exp_counter > 0:
+                    for param_group in self.optimizer.param_groups:
+                        param_group["lr"] *= self.replay_slowdown
                 self.mb_output = self.model(self.mb_x)
 
             self._after_forward(**kwargs)
