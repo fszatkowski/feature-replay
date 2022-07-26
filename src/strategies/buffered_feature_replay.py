@@ -103,7 +103,6 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
         super()._before_training_epoch(**kwargs)
 
     def make_optimizer(self):
-        # TODO without this override make_optimizer crashes the strategy
         self.optimizer = SGD(
             [
                 {"params": layer.parameters(), "lr": self.lr}
@@ -123,6 +122,7 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
             self._before_training_iteration(**kwargs)
 
             self.optimizer.zero_grad()
+            self.loss = 0
 
             self._before_forward(**kwargs)
             replay_sample = self.buffers.step()
@@ -151,12 +151,13 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
             self._after_forward(**kwargs)
 
             self.loss = self._criterion(self.mb_output, self.mb_y)
+
             self._before_backward(**kwargs)
-            self.loss.backward()
+            self.backward()
             self._after_backward(**kwargs)
 
             self._before_update(**kwargs)
-            self.optimizer.step()
+            self.optimizer_step()
             self._after_update(**kwargs)
 
             for param_group in self.optimizer.param_groups:

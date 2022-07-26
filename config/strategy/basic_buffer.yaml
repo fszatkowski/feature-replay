@@ -1,2 +1,3 @@
 name: BasicBuffer
 memory_size: 200
+replay_mb_size: null

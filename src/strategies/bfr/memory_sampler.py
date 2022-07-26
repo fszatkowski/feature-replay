@@ -95,9 +95,13 @@ class MemorySampler(ABC):
 
 class RandomMemorySampler(MemorySampler):
     """
-    Memory sampler that performs random sampling, eg. there is no guarantee that the batch is class
-    or task balanced or that the sampled examples are sampled any given number of times.
+    Memory sampler that performs random sampling, but guarantees that each example can only be seen
+    once until all other examples were sampled.
     """
+
+    def __init__(self, memory_size: int, batch_size: int):
+        super().__init__(memory_size, batch_size)
+        self.free_indices = set(range(self.memory_size))
 
     def _sample_batch(
         self,
@@ -105,8 +109,20 @@ class RandomMemorySampler(MemorySampler):
         labels: Tensor,
         experience_ids: Optional[Tensor] = None,
     ) -> tuple[Tensor, Tensor]:
-        batch_indices = random.sample(range(self.memory_size), self.batch_size)
+        if len(self.free_indices) >= self.batch_size:
+            batch_indices = random.sample(self.free_indices, self.batch_size)
+            self.free_indices -= set(batch_indices)
+        else:
+            remaining_indices = self.free_indices
+            self.free_indices = set(range(self.memory_size)) - remaining_indices
+            batch_indices = random.sample(
+                self.free_indices, self.batch_size - len(remaining_indices)
+            )
+            self.free_indices -= set(batch_indices)
+            self.free_indices.update(set(remaining_indices))
+            batch_indices += list(remaining_indices)
+
         return features[batch_indices], labels[batch_indices]
 
     def reset(self) -> None:
-        ...
+        self.free_indices = set(range(self.memory_size))

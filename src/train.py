@@ -89,6 +89,7 @@ def run(cfg: Config):
     elif cfg.strategy.name == "BasicBuffer":
         replay_plugin = ReplayPlugin(
             mem_size=cfg.strategy.memory_size,
+            batch_size_mem=cfg.strategy.replay_mb_size,
             storage_policy=ReservoirSamplingBuffer(max_size=cfg.strategy.memory_size),
         )
         strategy = Naive(
