@@ -17,6 +17,22 @@ def test_random_memory_sampler() -> None:
         assert labels[org_feature_idx] == sampled_label
 
 
+def test_random_memory_sampler_in_loop() -> None:
+    batch_size = 3
+    sampler = RandomMemorySampler(batch_size=batch_size, memory_size=7)
+    features = torch.tensor([0, 4, 1, 5, 3, 2, 6])
+    labels = torch.tensor([0, 1, 2, 3, 4, 5, 6])
+
+    for _ in range(10):
+        sampled_features, sampled_labels = sampler.sample_batch(
+            features=features, labels=labels
+        )
+        assert len(sampled_features) == len(sampled_labels) == batch_size
+        for sampled_feature, sampled_label in zip(sampled_features, sampled_labels):
+            org_feature_idx = (features == sampled_feature).nonzero()
+            assert labels[org_feature_idx] == sampled_label
+
+
 def test_random_memory_sampler_raises_on_non_matching_memory_size() -> None:
     sampler = RandomMemorySampler(memory_size=10, batch_size=8)
     features = torch.tensor([0, 1, 5, 3, 2, 6, 8, 7])
