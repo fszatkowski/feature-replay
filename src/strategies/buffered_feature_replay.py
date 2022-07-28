@@ -1,3 +1,4 @@
+import logging
 from typing import List, Optional, Union, cast
 
 import torch
@@ -16,8 +17,8 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
         self,
         model: FeatureReplayModel,
         replay_memory_sizes: Union[int, list[int]],
-        replay_mb_sizes: Optional[Union[int, list[int]]],
-        replay_probs: Optional[Union[float, list[float]]],
+        replay_mb_sizes: Union[int, list[int]],
+        replay_probs: Union[float, list[float]],
         replay_slowdown: float,
         criterion: Optional[torch.nn.Module],
         lr: float,
@@ -78,7 +79,7 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
                 replay_memory_sizes, n_layers=model.n_layers()
             ),
             batch_sizes=self.get_replay_mb_sizes(
-                replay_mb_sizes, n_layers=model.n_layers(), train_mb_size=train_mb_size
+                replay_mb_sizes, n_layers=model.n_layers()
             ),
             probs=self.get_replay_probs(
                 replay_probs,
@@ -173,31 +174,25 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
         replay_memory_sizes: Union[int, list[int]], n_layers: int
     ) -> list[int]:
         if isinstance(replay_memory_sizes, int):
-            replay_memory_sizes = [replay_memory_sizes for _ in range(n_layers)]
+            return [replay_memory_sizes for _ in range(n_layers)]
         else:
             assert len(replay_memory_sizes) == n_layers
-            replay_memory_sizes = replay_memory_sizes
-        return replay_memory_sizes
+            return replay_memory_sizes
 
     @staticmethod
     def get_replay_mb_sizes(
-        replay_mb_sizes: Optional[Union[int, list[int]]],
+        replay_mb_sizes: Union[int, list[int]],
         n_layers: int,
-        train_mb_size: int,
     ) -> list[int]:
-        if replay_mb_sizes is not None:
-            if isinstance(replay_mb_sizes, int):
-                replay_mb_sizes = [replay_mb_sizes for _ in range(n_layers)]
-            else:
-                assert len(replay_mb_sizes) == n_layers
-                replay_mb_sizes = replay_mb_sizes
+        if isinstance(replay_mb_sizes, int):
+            return [replay_mb_sizes for _ in range(n_layers)]
         else:
-            replay_mb_sizes = [train_mb_size for _ in range(n_layers)]
-        return replay_mb_sizes
+            assert len(replay_mb_sizes) == n_layers
+            return replay_mb_sizes
 
     @staticmethod
     def get_replay_probs(
-        replay_probs: Optional[Union[float, list[float]]],
+        replay_probs: Union[float, list[float]],
         replay_memory_sizes: Union[int, list[int]],
         n_layers: int,
     ) -> list[float]:
@@ -205,27 +200,17 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
             replay_memory_sizes, n_layers
         )
 
-        if replay_probs is not None:
-            if isinstance(replay_probs, float):
-                output_replay_probs = [
-                    replay_probs if mem_size != 0 else 0
-                    for mem_size in replay_memory_sizes
-                ]
-            else:
-                assert len(cast(list[float], replay_probs)) == n_layers
-                output_replay_probs = [
-                    prob if mem_size != 0 else 0
-                    for prob, mem_size in zip(
-                        cast(list[float], replay_probs), replay_memory_sizes
-                    )
-                ]
-        else:
-            tmp_probs = [
-                1.0 if mem_size != 0 else 0 for mem_size in replay_memory_sizes
-            ]
-            norm_factor = sum(prob for prob in tmp_probs)
+        if isinstance(replay_probs, float):
             output_replay_probs = [
-                prob / norm_factor if prob is not None else None for prob in tmp_probs
+                replay_probs if mem_size != 0 else 0 for mem_size in replay_memory_sizes
+            ]
+        else:
+            assert len(cast(list[float], replay_probs)) == n_layers
+            output_replay_probs = [
+                prob if mem_size != 0 else 0
+                for prob, mem_size in zip(
+                    cast(list[float], replay_probs), replay_memory_sizes
+                )
             ]
 
         probs_sum = sum(p for p in output_replay_probs)
@@ -234,5 +219,10 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
             f"`replay_probs`={replay_probs} obtained `self.replay_probs`={output_replay_probs} "
             f"which sum to {probs_sum}."
         )
+        if probs_sum < 0.99:
+            logging.warning(
+                f"Obtained probs {replay_probs} that don't sum to 1. "
+                f"This might be an error."
+            )
 
         return output_replay_probs
