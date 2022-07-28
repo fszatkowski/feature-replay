@@ -19,7 +19,7 @@ class Strategy:
 
     # FeatureBuffer strategy
     replay_mb_size: Union[int, list[int]]
-    replay_prob: Optional[Union[float, list[float]]]
+    replay_prob: Union[float, list[float]]
     replay_slowdown: float
 
 

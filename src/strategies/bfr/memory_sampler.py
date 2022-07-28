@@ -101,8 +101,6 @@ class RandomMemorySampler(MemorySampler):
 
     def __init__(self, memory_size: int, batch_size: int):
         super().__init__(memory_size, batch_size)
-        self.memory_size = memory_size
-        self.batch_size = batch_size
         self.current_permutation = random.sample(
             range(self.memory_size), self.memory_size
         )
