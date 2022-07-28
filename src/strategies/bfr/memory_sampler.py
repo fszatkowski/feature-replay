@@ -101,7 +101,12 @@ class RandomMemorySampler(MemorySampler):
 
     def __init__(self, memory_size: int, batch_size: int):
         super().__init__(memory_size, batch_size)
-        self.free_indices = set(range(self.memory_size))
+        self.memory_size = memory_size
+        self.batch_size = batch_size
+        self.current_permutation = random.sample(
+            range(self.memory_size), self.memory_size
+        )
+        self.current_idx = 0
 
     def _sample_batch(
         self,
@@ -109,20 +114,21 @@ class RandomMemorySampler(MemorySampler):
         labels: Tensor,
         experience_ids: Optional[Tensor] = None,
     ) -> tuple[Tensor, Tensor]:
-        if len(self.free_indices) >= self.batch_size:
-            batch_indices = random.sample(self.free_indices, self.batch_size)
-            self.free_indices -= set(batch_indices)
-        else:
-            remaining_indices = self.free_indices
-            self.free_indices = set(range(self.memory_size)) - remaining_indices
-            batch_indices = random.sample(
-                self.free_indices, self.batch_size - len(remaining_indices)
-            )
-            self.free_indices -= set(batch_indices)
-            self.free_indices.update(set(remaining_indices))
-            batch_indices += list(remaining_indices)
+        batch_indices = self.current_permutation[
+            self.current_idx : self.current_idx + self.batch_size
+        ]
+        self.current_idx += self.batch_size
+
+        if len(batch_indices) < self.batch_size:
+            size_diff = self.batch_size - len(batch_indices)
+            self.reset()
+            batch_indices += self.current_permutation[:size_diff]
+            self.current_idx += size_diff
 
         return features[batch_indices], labels[batch_indices]
 
     def reset(self) -> None:
-        self.free_indices = set(range(self.memory_size))
+        self.current_permutation = random.sample(
+            range(self.memory_size), self.memory_size
+        )
+        self.current_idx = 0
