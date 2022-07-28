@@ -91,17 +91,8 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
         )
 
     def _after_training_exp(self, **kwargs):
-        self.buffers.after_training_exp(
-            dataset=self.experience.dataset,
-            model=self.model,
-        )
-
+        self.buffers.after_training_exp(strategy=self)
         super()._after_training_exp(**kwargs)
-
-    def _before_training_epoch(self, **kwargs):
-        self.buffers.before_training_epoch()
-
-        super()._before_training_epoch(**kwargs)
 
     def make_optimizer(self):
         self.optimizer = SGD(
@@ -219,9 +210,9 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
             f"`replay_probs`={replay_probs} obtained `self.replay_probs`={output_replay_probs} "
             f"which sum to {probs_sum}."
         )
-        if probs_sum < 0.99:
+        if probs_sum < 1.0:
             logging.warning(
-                f"Obtained probs {replay_probs} that don't sum to 1. "
+                f"Obtained probs {output_replay_probs} that don't sum to 1, but to {probs_sum}."
                 f"This might be an error."
             )
 

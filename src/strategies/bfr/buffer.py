@@ -1,57 +1,52 @@
-from torch import Tensor
-from torch.utils.data import Dataset
+from typing import TYPE_CHECKING, Iterator
 
-from models.feature_replay_model import FeatureReplayModel
-from strategies.bfr.memory import ReplayMemory
-from strategies.bfr.memory_sampler import MemorySampler
+from torch import Tensor
+from torch.utils.data import DataLoader
+
+from strategies.bfr.storage_policy import ExperienceBalancedFeatureBuffer
+
+if TYPE_CHECKING:
+    from strategies.buffered_feature_replay import BufferedFeatureReplayStrategy
 
 
 class FeatureReplayBuffer:
-    def __init__(
-        self,
-        memory: ReplayMemory,
-        memory_sampler: MemorySampler,
-    ):
+    def __init__(self, memory_size: int, feature_level: int, batch_size: int):
         """
         Buffer containing features for replay. After each experience, can add features obtained for
         this experience and balances the buffer so that each experience is represented by roughly
         the same number of examples (can vary if ratio of memory size to number of experiences is
         not integer).
-        :param memory: Memory for buffer.
-        :param memory_sampler: Sampler used to get replayed batches.
+        :param memory_size: Memory size for buffer.
+        :param feature_level: Feature level at which the examples will be sampled.
+        :param batch_size: Batch size to sample.
         """
-        super().__init__()
-        self.memory = memory
-        self.memory_sampler = memory_sampler
+        self.memory_size = memory_size
+        self.feature_level = feature_level
+        self.batch_size = batch_size
 
-    @property
-    def feature_level(self) -> int:
-        return self.memory.sampler.feature_level
+        self.buffer = ExperienceBalancedFeatureBuffer(
+            max_size=memory_size, feature_level=feature_level
+        )
+        self.dataloader: DataLoader
+        self.dl_iterator: Iterator
 
-    @property
-    def memory_size(self) -> int:
-        return self.memory.memory_size
-
-    @property
-    def batch_size(self) -> int:
-        return self.memory_sampler.batch_size
-
-    def after_training_exp(
-        self, dataset: Dataset, model: FeatureReplayModel, experience_id: int
-    ) -> None:
+    def after_training_exp(self, strategy: "BufferedFeatureReplayStrategy") -> None:
         """
         Update the buffer on the last experience.
         """
-        self.memory.update(dataset, model, experience_id=experience_id)
-
-    def before_training_epoch(self) -> None:
-        """
-        Reset the state of memory sampler at the start of each epoch.
-        """
-        self.memory_sampler.reset()
+        self.buffer.update(strategy)
+        self.dataloader = DataLoader(
+            self.buffer.buffer, batch_size=self.batch_size, shuffle=True
+        )
+        self.dl_iterator = iter(self.dataloader)
 
     def sample(self) -> tuple[Tensor, Tensor]:
         """
         Return random batch from buffer.
         """
-        return self.memory_sampler.sample_batch_from_memory(memory=self.memory)
+        try:
+            x, y, t, e = next(self.dl_iterator)
+        except StopIteration:
+            self.dl_iterator = iter(self.dataloader)
+            x, y, t, e = next(self.dl_iterator)
+        return x, y
