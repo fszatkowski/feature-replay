@@ -1,18 +1,17 @@
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
 from avalanche.training.plugins.clock import Clock
 from torch import Tensor
-from torch.utils.data import Dataset
 
-from models.feature_replay_model import FeatureReplayModel
 from strategies.bfr.buffer import FeatureReplayBuffer
-from strategies.bfr.dataset_sampler import RandomDatasetSampler
-from strategies.bfr.memory import FixedSizeReplayMemory
-from strategies.bfr.memory_sampler import RandomMemorySampler
+
+if TYPE_CHECKING:
+    from strategies.buffered_feature_replay import BufferedFeatureReplayStrategy
 
 
 @dataclass
@@ -33,23 +32,10 @@ class FeatureReplayManager(ABC):
         self.buffers = buffers
         self.clock = clock
 
-    def after_training_exp(
-        self,
-        dataset: Dataset,
-        model: FeatureReplayModel,
-    ) -> None:
+    def after_training_exp(self, strategy: "BufferedFeatureReplayStrategy") -> None:
+        pass
         for buffer in self.buffers:
-            buffer.after_training_exp(
-                dataset=dataset, model=model, experience_id=self.clock.train_exp_counter
-            )
-
-    def before_training_epoch(self) -> None:
-        """
-        This method should reset the state of manager if any state is used (eg. if we want to
-        balance the number of replayed data between each feature level.
-        """
-        for buffer in self.buffers:
-            buffer.before_training_epoch()
+            buffer.after_training_exp(strategy=strategy)
 
     @abstractmethod
     def step(self) -> FeatureReplaySamplingResult:
@@ -94,17 +80,10 @@ class RandomFeatureReplayManager(FeatureReplayManager):
                 # TODO implement incremental memory
                 raise NotImplementedError()
             else:
-                dataset_sampler = RandomDatasetSampler(
-                    feature_level=feature_level, device=device
-                )
-                memory = FixedSizeReplayMemory(
-                    memory_size=memory_size, sampler=dataset_sampler
-                )
-                memory_sampler = RandomMemorySampler(
-                    memory_size=memory_size, batch_size=batch_size
-                )
                 buffer = FeatureReplayBuffer(
-                    memory=memory, memory_sampler=memory_sampler
+                    memory_size=memory_size,
+                    feature_level=feature_level,
+                    batch_size=batch_size,
                 )
 
                 buffers.append(buffer)

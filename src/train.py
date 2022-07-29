@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from avalanche.benchmarks import SplitCIFAR100, SplitMNIST
 from avalanche.training.plugins import ReplayPlugin
-from avalanche.training.storage_policy import ReservoirSamplingBuffer
+from avalanche.training.storage_policy import ExperienceBalancedBuffer
 from avalanche.training.supervised import JointTraining, Naive
 
 from config import Config
@@ -88,7 +88,7 @@ def run(cfg: Config):
         replay_plugin = ReplayPlugin(
             mem_size=cfg.strategy.memory_size,
             batch_size_mem=cfg.strategy.replay_mb_size,
-            storage_policy=ReservoirSamplingBuffer(max_size=cfg.strategy.memory_size),
+            storage_policy=ExperienceBalancedBuffer(max_size=cfg.strategy.memory_size),
         )
         strategy = Naive(
             model=model,
