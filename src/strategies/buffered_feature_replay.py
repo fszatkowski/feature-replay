@@ -5,7 +5,6 @@ import torch
 from avalanche.training.plugins import EvaluationPlugin, SupervisedPlugin
 from avalanche.training.plugins.evaluation import default_evaluator
 from avalanche.training.templates.supervised import SupervisedTemplate
-from torch import Tensor
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 
@@ -115,7 +114,32 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
             self.loss = 0
 
             self._before_forward(**kwargs)
-            self.mb_output = self.forward()
+
+            replay_sample = self.buffers.step()
+            if replay_sample.replay:
+                mb_latent_features = self.model(
+                    self.mb_x,
+                    skip_last=self.model.n_layers() - replay_sample.feature_level,
+                )
+                mb_latent_features = torch.cat(
+                    [mb_latent_features, replay_sample.features]
+                )
+                self.mb_output = self.model(
+                    mb_latent_features, skip_first=replay_sample.feature_level
+                )
+                mb_y = torch.cat([self.mb_y, replay_sample.labels])
+                self.mbatch[1] = mb_y
+
+                for param_group in self.optimizer.param_groups[
+                    : replay_sample.feature_level
+                ]:
+                    param_group["lr"] *= self.replay_slowdown
+            else:
+                if self.clock.train_exp_counter > 0:
+                    for param_group in self.optimizer.param_groups:
+                        param_group["lr"] *= self.replay_slowdown
+                self.mb_output = self.model(self.mb_x)
+
             self._after_forward(**kwargs)
 
             self.loss += self.criterion()
@@ -132,32 +156,6 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
                 param_group["lr"] = self.lr
 
             self._after_training_iteration(**kwargs)
-
-    def forward(self) -> Tensor:
-        replay_sample = self.buffers.step()
-        if replay_sample.replay:
-            mb_latent_features = self.model(
-                self.mb_x,
-                skip_last=self.model.n_layers() - replay_sample.feature_level,
-            )
-            mb_latent_features = torch.cat([mb_latent_features, replay_sample.features])
-            self.mb_output = self.model(
-                mb_latent_features, skip_first=replay_sample.feature_level
-            )
-            mb_y = torch.cat([self.mb_y, replay_sample.labels])
-            self.mbatch[1] = mb_y
-
-            for param_group in self.optimizer.param_groups[
-                : replay_sample.feature_level
-            ]:
-                param_group["lr"] *= self.replay_slowdown
-
-        else:
-            if self.clock.train_exp_counter > 0:
-                for param_group in self.optimizer.param_groups:
-                    param_group["lr"] *= self.replay_slowdown
-            self.mb_output = self.model(self.mb_x)
-        return self.mb_output
 
     @staticmethod
     def get_replay_memory_sizes(
