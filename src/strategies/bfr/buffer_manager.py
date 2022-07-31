@@ -98,12 +98,15 @@ class RandomFeatureReplayManager(FeatureReplayManager):
         super().__init__(buffers=buffers, clock=clock)
 
     def step(self) -> FeatureReplaySamplingResult:
-        replay_choice = np.random.choice(
-            np.arange(len(self.replay_probs)), p=self.replay_probs
-        )
-        if self.clock.train_exp_counter == 0 or replay_choice == self.no_replay_idx:
+        if self.clock.train_exp_counter == 0:
             return FeatureReplaySamplingResult(replay=False)
         else:
+            replay_choice = np.random.choice(
+                np.arange(len(self.replay_probs)), p=self.replay_probs
+            )
+            if replay_choice == self.no_replay_idx:
+                return FeatureReplaySamplingResult(replay=False)
+
             buffer = self.buffers[replay_choice]
             features, labels = buffer.sample()
             return FeatureReplaySamplingResult(
