@@ -4,11 +4,11 @@ from pathlib import Path
 import hydra
 import numpy as np
 import torch
-from avalanche.benchmarks import SplitCIFAR100, SplitMNIST
 from avalanche.training.plugins import ReplayPlugin
 from avalanche.training.storage_policy import ExperienceBalancedBuffer
 from avalanche.training.supervised import JointTraining, Naive
 
+from benchmarks.utils import get_benchmark, get_benchmark_for_joint_training
 from config import Config
 from models.conv_mlp import ConvMLP
 from models.mlp import MLP
@@ -29,14 +29,7 @@ def run(cfg: Config):
         random.seed(cfg.seed)
         np.random.seed(cfg.seed)
 
-    if cfg.benchmark.name == "CIFAR100":
-        benchmark = SplitCIFAR100(
-            n_experiences=cfg.benchmark.n_experiences, seed=cfg.seed
-        )
-    elif cfg.benchmark.name == "SplitMNIST":
-        benchmark = SplitMNIST(n_experiences=cfg.benchmark.n_experiences, seed=cfg.seed)
-    else:
-        raise NotImplementedError()
+    benchmark = get_benchmark(cfg)
 
     if cfg.model.name == "MLP":
         input_size = 1
@@ -48,6 +41,7 @@ def run(cfg: Config):
             hidden_sizes=cfg.model.hidden_sizes,
             dropout_ratio=cfg.model.dropout_ratio,
         )
+
     elif cfg.model.name == "ConvMLP":
         model = ConvMLP(
             input_size=cfg.benchmark.input_size,
@@ -58,6 +52,7 @@ def run(cfg: Config):
             hidden_sizes=cfg.model.hidden_sizes,
             dropout_ratio=cfg.model.dropout_ratio,
         )
+
     else:
         raise NotImplementedError()
 
@@ -101,14 +96,9 @@ def run(cfg: Config):
             plugins=[replay_plugin],
             evaluator=get_eval_plugin(cfg),
         )
-    elif cfg.strategy.name == "JointTraining":
-        if cfg.benchmark.name == "CIFAR100":
-            benchmark = SplitCIFAR100(n_experiences=1, seed=cfg.seed)
-        elif cfg.benchmark.name == "SplitMNIST":
-            benchmark = SplitMNIST(n_experiences=1, seed=cfg.seed)
-        else:
-            raise NotImplementedError()
 
+    elif cfg.strategy.name == "JointTraining":
+        benchmark = get_benchmark_for_joint_training(cfg)
         strategy = JointTraining(
             model=model,
             optimizer=optimizer,
@@ -119,6 +109,7 @@ def run(cfg: Config):
             device=cfg.device,
             evaluator=get_eval_plugin(cfg),
         )
+
     elif cfg.strategy.name == "FeatureBuffer":
         strategy = BufferedFeatureReplayStrategy(
             model=model,
@@ -136,12 +127,17 @@ def run(cfg: Config):
             device=cfg.device,
             evaluator=get_eval_plugin(cfg),
         )
+
     else:
         raise NotImplementedError()
 
     for experience in benchmark.train_stream:
         strategy.train(experience)
         strategy.eval(benchmark.test_stream)
+
+    if cfg.output_model_path is not None:
+        Path(cfg.output_model_path).parent.mkdir(exist_ok=True, parents=True)
+        torch.save(model, cfg.output_model_path)
 
 
 if __name__ == "__main__":

@@ -89,8 +89,9 @@ class ReservoirFeatureSamplingBuffer(ExemplarsBuffer):
         x_ = []
         y_ = []
         t_ = []
+
+        strategy.model.eval()
         with torch.no_grad():
-            # TODO should we call model.eval() here?
             for x, y, t in self.buffer:
                 x = x.unsqueeze(0).to(strategy.device)
                 features = strategy.model(

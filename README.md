@@ -32,3 +32,15 @@ Here *strategy* is the name of the [directory](config/strategy) in [config](conf
 python src/train.py \
   strategy=strategy.basic_buffer
 ```
+
+### Impact of data augmentations
+When comparing Buffered Feature Replay with Buffered Replay, data augmentations should be 
+disabled as augmentations for features from hidden layers are not implemented.
+To disable augmentations, you can use `strategy.augmentations=false`:
+```shell
+python src/train.py \
+  ... \
+  strategy.augmentations=false \
+  ...
+
+```
