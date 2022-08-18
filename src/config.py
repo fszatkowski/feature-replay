@@ -8,6 +8,7 @@ class Benchmark:
     input_size: tuple[int, int, int]
     n_classes: int
     n_experiences: int
+    augmentations: bool
 
 
 @dataclass
@@ -64,3 +65,4 @@ class Config:
     device: str
     wandb_entity: str
     wandb_project: str
+    output_model_path: Optional[str]
