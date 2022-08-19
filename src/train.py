@@ -29,7 +29,10 @@ def run(cfg: Config):
         random.seed(cfg.seed)
         np.random.seed(cfg.seed)
 
-    benchmark = get_benchmark(cfg)
+    if cfg.strategy.name != "JointTraining":
+        benchmark = get_benchmark(cfg)
+    else:
+        benchmark = get_benchmark_for_joint_training(cfg)
 
     if cfg.model.name == "MLP":
         input_size = 1
@@ -98,7 +101,6 @@ def run(cfg: Config):
         )
 
     elif cfg.strategy.name == "JointTraining":
-        benchmark = get_benchmark_for_joint_training(cfg)
         strategy = JointTraining(
             model=model,
             optimizer=optimizer,
