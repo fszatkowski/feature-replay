@@ -5,14 +5,18 @@ import hydra
 import numpy as np
 import torch
 from avalanche.benchmarks import SplitCIFAR100, SplitMNIST
-from avalanche.training.plugins import ReplayPlugin
+from avalanche.models.generator import VAE_loss
+from avalanche.training.plugins import GenerativeReplayPlugin, ReplayPlugin
 from avalanche.training.storage_policy import ExperienceBalancedBuffer
 from avalanche.training.supervised import JointTraining, Naive
+from avalanche.training.supervised.strategy_wrappers import VAETraining
 
 from config import Config
 from models.conv_mlp import ConvMLP
 from models.mlp import MLP
+from models.mlp_vae import MlpVAE
 from plugins.eval import get_eval_plugin
+from strategies.basic_generative_replay import BasicGenerativeReplay
 from strategies.buffered_feature_replay import BufferedFeatureReplayStrategy
 
 ROOT = Path(__file__).parent.parent
@@ -130,6 +134,57 @@ def run(cfg: Config):
             lr=cfg.training.optimizer.lr,
             momentum=cfg.training.optimizer.momentum,
             l2=cfg.training.optimizer.l2,
+            train_epochs=cfg.training.train_epochs,
+            train_mb_size=cfg.training.train_mb_size,
+            eval_mb_size=cfg.training.eval_mb_size,
+            device=cfg.device,
+            evaluator=get_eval_plugin(cfg),
+        )
+    elif cfg.strategy.name == "Generative":
+        if cfg.benchmark.name == "SplitMNIST":
+            benchmark = SplitMNIST(n_experiences=1, seed=cfg.seed)
+        else:
+            raise NotImplementedError()
+
+        if cfg.generative_model.name == "MLPVAE":
+            generator_model = MlpVAE(
+                cfg.benchmark.input_size,
+                nhid=cfg.generative_model.nhid,
+                hidden_sizes=cfg.generative_model.hidden_sizes,
+                device=cfg.device,
+            )
+        else:
+            raise NotImplementedError()
+
+        if cfg.strategy.generator.training.optimizer.name == "SGD":
+            generator_optimizer = torch.optim.SGD(
+                filter(lambda p: p.requires_grad, generator_model.parameters()),
+                lr=cfg.strategy.generator.training.optimizer.lr,
+                momentum=cfg.strategy.generator.training.optimizer.momentum,
+                weight_decay=cfg.strategy.generator.training.optimizer.l2,
+            )
+
+        generator_strategy = VAETraining(
+            model=generator_model,
+            optimizer=generator_optimizer,
+            criterion=VAE_loss,
+            train_mb_size=cfg.strategy.generator.training.train_mb_size,
+            train_epochs=cfg.strategy.generator.training.train_epochs,
+            eval_mb_size=cfg.strategy.generator.training.eval_mb_size,
+            device=cfg.device,
+            plugins=[
+                GenerativeReplayPlugin(
+                    replay_size=cfg.strategy.replay_mb_size,
+                    increasing_replay_size=cfg.strategy.increasing_replay_size,
+                )
+            ],
+        )
+
+        strategy = BasicGenerativeReplay(
+            model=model,
+            generator_strategy=generator_strategy,
+            optimizer=optimizer,
+            criterion=criterion,
             train_epochs=cfg.training.train_epochs,
             train_mb_size=cfg.training.train_mb_size,
             eval_mb_size=cfg.training.eval_mb_size,

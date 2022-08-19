@@ -1,0 +1,15 @@
+name: Generative
+
+replay_mb_size: 128
+increasing_replay_size: False
+
+generator:
+  training:
+    train_epochs: 2
+    train_mb_size: 128
+    eval_mb_size: 128
+    optimizer:
+      name: SGD
+      lr: 0.001
+      momentum: 0.9
+      l2: 0.0

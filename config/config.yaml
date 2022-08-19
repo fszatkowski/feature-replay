@@ -3,12 +3,14 @@ defaults:
   - benchmark:
     - split_mnist
   - strategy:
-    - naive
+    - generative
   - model:
     - mlp
+  - generative_model:
+    - mlp_vae
 
 training:
-  train_epochs: 5
+  train_epochs: 1
   train_mb_size: 128
   eval_mb_size: 128
   optimizer:

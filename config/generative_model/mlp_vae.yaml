@@ -1,0 +1,3 @@
+name: MLPVAE
+hidden_sizes: [512, 512]
+nhid: 2
