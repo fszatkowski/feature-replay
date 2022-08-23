@@ -25,6 +25,9 @@ from torchvision import transforms
 
 from models.layers.dense import DenseLayer
 from models.layers.flatten import Flatten
+from models.layers.conv import ConvLayer
+from models.layers.conv_transpose import ConvTransposeLayer
+from models.layers.reshape import Reshape
 
 
 class Generator(BaseModel):
@@ -50,7 +53,7 @@ class Generator(BaseModel):
 ###########################
 
 
-class VAEMLPEncoder(nn.Module):
+class VAEConvEncoder(nn.Module):
     """
     Encoder part of the VAE, computer the latent represenations of the input.
 
@@ -59,19 +62,44 @@ class VAEMLPEncoder(nn.Module):
     """
 
     def __init__(
-        self, shape: [list[int]] = (1, 28, 28), hidden_sizes: Optional[list[int]] = None
-    ):
-        super(VAEMLPEncoder, self).__init__()
-        flattened_input_size = torch.Size(shape).numel()
+            self,
+            input_size: [list[int]] = (1, 28, 28),
+            channels: Optional[list[int]] = None,
+            kernel_size: int = 4,
+            pooling: bool = False,
+            hidden_sizes: Optional[list[int]] = None
+    ) -> object:
+        super(VAEConvEncoder, self).__init__()
         self.layers = nn.Sequential()
 
         if hidden_sizes is None:
             hidden_sizes = [512]
+        if channels is None:
+            channels = [64]
+
+        for layer_idx, (in_channels, out_channels) in enumerate(
+                zip([input_size[0]] + channels, channels)
+        ):
+            self.layers.add_module(
+                f"conv{layer_idx}",
+                ConvLayer(
+                    in_channels=in_channels,
+                    out_channels=out_channels,
+                    kernel_size=kernel_size,
+                    pooling=pooling,
+                    dropout_ratio=0,
+                    flatten=False,
+                ),
+            )
+
+        hidden_input_size = input_size[1] * input_size[2] * channels[-1]
+        if pooling:
+            hidden_input_size = int(hidden_input_size / 4 ** len(channels))
 
         self.layers.add_module("input_flattened", Flatten())
 
         for layer_idx, (in_size, out_size) in enumerate(
-            zip([flattened_input_size] + hidden_sizes[:-1], hidden_sizes)
+                zip([hidden_input_size] + hidden_sizes[:-1], hidden_sizes)
         ):
             self.layers.add_module(
                 f"fc{layer_idx}",
@@ -89,7 +117,7 @@ class VAEMLPEncoder(nn.Module):
         return x
 
 
-class VAEMLPDecoder(nn.Module):
+class VAEConvDecoder(nn.Module):
     """
     Decoder part of the VAE. Reverses Encoder.
 
@@ -98,22 +126,34 @@ class VAEMLPDecoder(nn.Module):
     """
 
     def __init__(
-        self,
-        shape: [list[int]] = (1, 28, 28),
-        nhid: int = 2,
-        hidden_sizes: Optional[list[int]] = None,
+            self,
+            input_size: [list[int]] = (1, 28, 28),
+            channels: Optional[list[int]] = None,
+            kernel_size: int = 4,
+            strides: [list[int]] = None,
+            hidden_sizes: Optional[list[int]] = None,
+            nhid: int = 2,
     ):
 
-        super(VAEMLPDecoder, self).__init__()
-        flattened_output_size = torch.Size(shape).numel()
-        self.shape = shape
+        super(VAEConvDecoder, self).__init__()
+
+        self.input_size = input_size
         self.layers = nn.Sequential()
 
         if hidden_sizes is None:
             hidden_sizes = [512]
+        if channels is None:
+            channels = [64]
+        if strides is None:
+            strides = [2]
+
+        size_before_conv_transpose = [int(channels[-1]),
+                                      int(input_size[1] / 2 ** len(channels)),
+                                      int(input_size[1] / 2 ** len(channels))]
+        flattened_size_before_conv_transpose = torch.Size(size_before_conv_transpose).numel()
 
         for layer_idx, (in_size, out_size) in enumerate(
-            zip([nhid] + hidden_sizes, hidden_sizes + [flattened_output_size])
+                zip([nhid] + hidden_sizes, hidden_sizes + [flattened_size_before_conv_transpose])
         ):
             self.layers.add_module(
                 f"fc{layer_idx}",
@@ -125,6 +165,22 @@ class VAEMLPDecoder(nn.Module):
                 ),
             )
 
+        self.layers.add_module("reshape", Reshape(size_before_conv_transpose))
+
+        for layer_idx, (in_channels, out_channels, stride) in enumerate(
+                zip(channels, channels[:-1] + [input_size[0]], strides)
+        ):
+            self.layers.add_module(
+                f"conv{layer_idx}",
+                ConvTransposeLayer(
+                    in_channels=in_channels,
+                    out_channels=out_channels,
+                    kernel_size=kernel_size,
+                    stride=stride,
+                    flatten=False,
+                ),
+            )
+
         # TODO: Check if generetive replay from avalanche
         # was hardcoded to only work for MNISt?
         # If yes - make it a general implementation
@@ -133,10 +189,10 @@ class VAEMLPDecoder(nn.Module):
     def forward(self, z: Tensor) -> Tensor:
         for layer in self.layers:
             z = layer(z)
-        return self.invTrans(z.view(-1, *self.shape))
+        return self.invTrans(z.view(-1, *self.input_size))
 
 
-class MlpVAE(Generator, nn.Module):
+class ConvVAE(Generator, nn.Module):
     """
     Variational autoencoder module:
     fully-connected and suited for any input shape and type.
@@ -150,23 +206,35 @@ class MlpVAE(Generator, nn.Module):
     """
 
     def __init__(
-        self,
-        shape: [list[int]] = (1, 28, 28),
-        nhid: int = 2,
-        hidden_sizes: Optional[list[int]] = None,
-        device="cpu",
+            self,
+            shape: [list[int]] = (1, 28, 28),
+            nhid: int = 2,
+            channels: Optional[list[int]] = None,
+            kernel_size: int = 4,
+            strides: [list[int]] = None,
+            hidden_sizes: Optional[list[int]] = None,
+            device="cpu",
     ):
         """
         :param shape: Shape of each input sample
         :param nhid: Dimension of latent space of Encoder.
         """
-        super(MlpVAE, self).__init__()
+        super(ConvVAE, self).__init__()
         self.dim = nhid
         self.device = device
-        self.encoder = VAEMLPEncoder(shape=shape, hidden_sizes=hidden_sizes)
+        self.encoder = VAEConvEncoder(input_size=shape,
+                                      kernel_size=kernel_size,
+                                      channels=channels,
+                                      pooling=True,
+                                      hidden_sizes=hidden_sizes)
         self.calc_mean = nn.Linear(hidden_sizes[-1], nhid)
         self.calc_logvar = nn.Linear(hidden_sizes[0], nhid)
-        self.decoder = VAEMLPDecoder(shape, nhid=nhid, hidden_sizes=hidden_sizes[::-1])
+        self.decoder = VAEConvDecoder(input_size=shape,
+                                      kernel_size=kernel_size,
+                                      channels=channels[::-1],
+                                      strides=strides,
+                                      nhid=nhid,
+                                      hidden_sizes=hidden_sizes[::-1])
 
     def get_features(self, x):
         """
@@ -228,7 +296,7 @@ def VAE_loss(X, forward_output):
     """
     X_hat, mean, logvar = forward_output
     reconstruction_loss = MSE_loss(X_hat, X)
-    KL_divergence = 0.5 * torch.sum(-1 - logvar + torch.exp(logvar) + mean**2)
+    KL_divergence = 0.5 * torch.sum(-1 - logvar + torch.exp(logvar) + mean ** 2)
     return reconstruction_loss + KL_divergence
 
 

@@ -15,6 +15,8 @@ from config import Config
 from models.conv_mlp import ConvMLP
 from models.mlp import MLP
 from models.mlp_vae import MlpVAE
+from models.conv_vae import ConvVAE
+
 from plugins.eval import get_eval_plugin
 from strategies.basic_generative_replay import BasicGenerativeReplay
 from strategies.buffered_feature_replay import BufferedFeatureReplayStrategy
@@ -142,7 +144,7 @@ def run(cfg: Config):
         )
     elif cfg.strategy.name == "Generative":
         if cfg.benchmark.name == "SplitMNIST":
-            benchmark = SplitMNIST(n_experiences=1, seed=cfg.seed)
+            benchmark = SplitMNIST(n_experiences=cfg.benchmark.n_experiences, seed=cfg.seed)
         else:
             raise NotImplementedError()
 
@@ -150,6 +152,17 @@ def run(cfg: Config):
             generator_model = MlpVAE(
                 cfg.benchmark.input_size,
                 nhid=cfg.generative_model.nhid,
+                hidden_sizes=cfg.generative_model.hidden_sizes,
+                device=cfg.device,
+            )
+
+        elif cfg.generative_model.name == "ConvVAE":
+            generator_model = ConvVAE(
+                cfg.benchmark.input_size,
+                nhid=cfg.generative_model.nhid,
+                kernel_size=cfg.generative_model.kernel_size,
+                channels=cfg.generative_model.channels,
+                strides=cfg.generative_model.strides,
                 hidden_sizes=cfg.generative_model.hidden_sizes,
                 device=cfg.device,
             )
