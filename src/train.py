@@ -12,6 +12,7 @@ from benchmarks.utils import get_benchmark, get_benchmark_for_joint_training
 from config import Config
 from models.conv_mlp import ConvMLP
 from models.mlp import MLP
+from models.resnet import ResNet18
 from plugins.eval import get_eval_plugin
 from strategies.buffered_feature_replay import BufferedFeatureReplayStrategy
 
@@ -55,6 +56,11 @@ def run(cfg: Config):
             hidden_sizes=cfg.model.hidden_sizes,
             dropout_ratio=cfg.model.dropout_ratio,
         )
+
+    elif cfg.model.name == "ResNet":
+        if cfg.benchmark.input_size != (3, 32, 32):
+            raise ValueError("ResNet can only be used with 32x32 inputs.")
+        model = ResNet18(num_classes=cfg.benchmark.n_classes)
 
     else:
         raise NotImplementedError()
