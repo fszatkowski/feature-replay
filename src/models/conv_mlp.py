@@ -1,7 +1,5 @@
 from typing import Optional
 
-from torch import Tensor
-
 from models.feature_replay_model import FeatureReplayModel
 from models.layers.conv import ConvLayer
 from models.layers.dense import DenseLayer
@@ -74,19 +72,3 @@ class ConvMLP(FeatureReplayModel):
                 dropout_ratio=dropout_ratio,
             ),
         )
-
-    def forward(self, x: Tensor, skip_first: int = 0, skip_last: int = 0) -> Tensor:
-        if len(self.layers) - skip_last - skip_first < 0:
-            raise ValueError()
-
-        used_layers = self.layers[skip_first : len(self.layers) - skip_last]
-        if len(used_layers) > 0:
-            for layer in used_layers:
-                x = layer(x)
-        return x
-
-    def get_features(self, x: Tensor) -> Tensor:
-        return self.forward(x, skip_last=1)
-
-    def n_layers(self) -> int:
-        return len(self.layers)
