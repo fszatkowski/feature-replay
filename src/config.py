@@ -23,6 +23,12 @@ class Strategy:
     replay_prob: Union[float, list[float]]
     replay_slowdown: float
 
+    # LwF
+    alpha: float
+    temperature: float
+
+    # EWC
+    ewc_lambda: float
 
 @dataclass
 class Model:

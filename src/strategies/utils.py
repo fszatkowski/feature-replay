@@ -1,4 +1,5 @@
 import torch.nn
+from avalanche.training import AR1, LwF, EWC, CWRStar
 from avalanche.training.plugins import ReplayPlugin
 from avalanche.training.storage_policy import ExperienceBalancedBuffer
 from avalanche.training.supervised import JointTraining, Naive
@@ -78,6 +79,59 @@ def get_training_strategy(
             lr=cfg.training.optimizer.lr,
             momentum=cfg.training.optimizer.momentum,
             l2=cfg.training.optimizer.l2,
+            train_epochs=cfg.training.train_epochs,
+            train_mb_size=cfg.training.train_mb_size,
+            eval_mb_size=cfg.training.eval_mb_size,
+            device=cfg.device,
+            evaluator=get_eval_plugin(cfg),
+        )
+
+    elif cfg.strategy.name == "AR1":
+        strategy = AR1(
+            criterion=criterion,
+            lr=cfg.training.optimizer.lr,
+            momentum=cfg.training.optimizer.momentum,
+            l2=cfg.training.optimizer.l2,
+            train_epochs=cfg.training.train_epochs,
+            train_mb_size=cfg.training.train_mb_size,
+            eval_mb_size=cfg.training.eval_mb_size,
+            device=cfg.device,
+            evaluator=get_eval_plugin(cfg),
+        )
+
+    elif cfg.strategy.name == "LwF":
+        strategy = LwF(
+            model=model,
+            alpha=cfg.strategy.alpha,
+            temperature=cfg.strategy.temperature,
+            criterion=criterion,
+            optimizer=optimizer,
+            train_epochs=cfg.training.train_epochs,
+            train_mb_size=cfg.training.train_mb_size,
+            eval_mb_size=cfg.training.eval_mb_size,
+            device=cfg.device,
+            evaluator=get_eval_plugin(cfg),
+        )
+
+    elif cfg.strategy.name == "EWC":
+        strategy = EWC(
+            model=model,
+            ewc_lambda=cfg.strategy.ewc_lambda,
+            criterion=criterion,
+            optimizer=optimizer,
+            train_epochs=cfg.training.train_epochs,
+            train_mb_size=cfg.training.train_mb_size,
+            eval_mb_size=cfg.training.eval_mb_size,
+            device=cfg.device,
+            evaluator=get_eval_plugin(cfg),
+        )
+
+    elif cfg.strategy.name == "CWRStar":
+        strategy = CWRStar(
+            model=model,
+            ewc_lambda=cfg.strategy.ewc_lambda,
+            criterion=criterion,
+            optimizer=optimizer,
             train_epochs=cfg.training.train_epochs,
             train_mb_size=cfg.training.train_mb_size,
             eval_mb_size=cfg.training.eval_mb_size,
