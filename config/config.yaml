@@ -7,10 +7,10 @@ defaults:
   - model:
     - mlp
   - generative_model:
-    - mlp_vae
+    - conv_vae
 
 training:
-  train_epochs: 5
+  train_epochs: 10
   train_mb_size: 128
   eval_mb_size: 128
   optimizer:

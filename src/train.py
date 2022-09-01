@@ -10,6 +10,7 @@ from avalanche.training.plugins import GenerativeReplayPlugin, ReplayPlugin
 from avalanche.training.storage_policy import ExperienceBalancedBuffer
 from avalanche.training.supervised import JointTraining, Naive
 from avalanche.training.supervised.strategy_wrappers import VAETraining
+from torch.optim import Adam
 
 from config import Config
 from models.conv_mlp import ConvMLP
@@ -169,12 +170,11 @@ def run(cfg: Config):
         else:
             raise NotImplementedError()
 
-        if cfg.strategy.generator.training.optimizer.name == "SGD":
-            generator_optimizer = torch.optim.SGD(
+        if cfg.strategy.generator.training.optimizer.name == "Adam":
+            generator_optimizer = Adam(
                 filter(lambda p: p.requires_grad, generator_model.parameters()),
                 lr=cfg.strategy.generator.training.optimizer.lr,
-                momentum=cfg.strategy.generator.training.optimizer.momentum,
-                weight_decay=cfg.strategy.generator.training.optimizer.l2,
+                weight_decay=cfg.strategy.generator.training.optimizer.weight_decay,
             )
 
         generator_strategy = VAETraining(

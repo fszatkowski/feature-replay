@@ -1,6 +1,6 @@
 name: ConvVAE
-channels: [32, 64]
+channels: [32, 32]
 strides: [2, 2]
 kernel_size: 4
-hidden_sizes: [512]
+hidden_sizes: [64]
 nhid: 2

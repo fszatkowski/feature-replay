@@ -178,8 +178,11 @@ class VAEConvDecoder(nn.Module):
                     kernel_size=kernel_size,
                     stride=stride,
                     flatten=False,
+                    activation=True if layer_idx != (len(channels) - 1) else False,
                 ),
             )
+
+        self.last_layer = nn.Sigmoid()
 
         # TODO: Check if generetive replay from avalanche
         # was hardcoded to only work for MNISt?
@@ -189,6 +192,7 @@ class VAEConvDecoder(nn.Module):
     def forward(self, z: Tensor) -> Tensor:
         for layer in self.layers:
             z = layer(z)
+        z = self.last_layer(z)
         return self.invTrans(z.view(-1, *self.input_size))
 
 

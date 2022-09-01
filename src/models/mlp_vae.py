@@ -26,6 +26,7 @@ from torchvision import transforms
 from models.layers.dense import DenseLayer
 from models.layers.flatten import Flatten
 
+from avalanche.models.utils import MLP, Flatten
 
 class Generator(BaseModel):
     """
@@ -62,7 +63,7 @@ class VAEMLPEncoder(nn.Module):
         self, shape: [list[int]] = (1, 28, 28), hidden_sizes: Optional[list[int]] = None
     ):
         super(VAEMLPEncoder, self).__init__()
-        flattened_input_size = torch.Size(shape).numel()
+        self.flattened_input_size = torch.Size(shape).numel()
         self.layers = nn.Sequential()
 
         if hidden_sizes is None:
@@ -71,7 +72,7 @@ class VAEMLPEncoder(nn.Module):
         self.layers.add_module("input_flattened", Flatten())
 
         for layer_idx, (in_size, out_size) in enumerate(
-            zip([flattened_input_size] + hidden_sizes[:-1], hidden_sizes)
+            zip([self.flattened_input_size] + hidden_sizes[:-1], hidden_sizes)
         ):
             self.layers.add_module(
                 f"fc{layer_idx}",
@@ -95,6 +96,7 @@ class VAEMLPDecoder(nn.Module):
 
     :param shape: Shape of output: (channels, height, width).
     :param nhid: Dimension of input.
+    :param hidden_sizes: Hidden layer sizes
     """
 
     def __init__(
@@ -103,28 +105,28 @@ class VAEMLPDecoder(nn.Module):
         nhid: int = 2,
         hidden_sizes: Optional[list[int]] = None,
     ):
-
         super(VAEMLPDecoder, self).__init__()
-        flattened_output_size = torch.Size(shape).numel()
+        self.flattened_output_size = torch.Size(shape).numel()
         self.shape = shape
         self.layers = nn.Sequential()
 
         if hidden_sizes is None:
             hidden_sizes = [512]
 
+        ### TODO: Change last activation to SIGMOID
         for layer_idx, (in_size, out_size) in enumerate(
-            zip([nhid] + hidden_sizes, hidden_sizes + [flattened_output_size])
+            zip([nhid] + hidden_sizes, hidden_sizes + [self.flattened_output_size])
         ):
             self.layers.add_module(
                 f"fc{layer_idx}",
                 DenseLayer(
                     in_size=in_size,
                     out_size=out_size,
-                    activation=True,
+                    activation=True if layer_idx != len(hidden_sizes) else False,
                     dropout_ratio=0,
                 ),
             )
-
+        self.last_layer = nn.Sigmoid()
         # TODO: Check if generetive replay from avalanche
         # was hardcoded to only work for MNISt?
         # If yes - make it a general implementation
@@ -133,6 +135,7 @@ class VAEMLPDecoder(nn.Module):
     def forward(self, z: Tensor) -> Tensor:
         for layer in self.layers:
             z = layer(z)
+        z = self.last_layer(z)
         return self.invTrans(z.view(-1, *self.shape))
 
 
