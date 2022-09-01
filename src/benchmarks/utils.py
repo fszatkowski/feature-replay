@@ -10,6 +10,11 @@ from avalanche.benchmarks.classic.ccifar100 import (
     _default_cifar100_eval_transform,
     _default_cifar100_train_transform,
 )
+from avalanche.benchmarks.classic.cfashion_mnist import (
+    SplitFMNIST,
+    _default_fmnist_eval_transform,
+    _default_fmnist_train_transform,
+)
 from avalanche.benchmarks.classic.cmnist import (
     PermutedMNIST,
     _default_mnist_eval_transform,
@@ -52,6 +57,19 @@ def get_benchmark(cfg: Config) -> TBenchmark:
             _default_mnist_eval_transform.transforms.append(Pad(2, padding_mode="edge"))
             cfg.benchmark.input_size = (1, 32, 32)
         benchmark = SplitMNIST(n_experiences=cfg.benchmark.n_experiences, seed=cfg.seed)
+
+    elif cfg.benchmark.name == "SplitFMNIST":
+        if cfg.model.pooling:
+            _default_fmnist_train_transform.transforms.append(
+                Pad(2, padding_mode="edge")
+            )
+            _default_fmnist_eval_transform.transforms.append(
+                Pad(2, padding_mode="edge")
+            )
+            cfg.benchmark.input_size = (1, 32, 32)
+        benchmark = SplitFMNIST(
+            n_experiences=cfg.benchmark.n_experiences, seed=cfg.seed
+        )
 
     elif cfg.benchmark.name == "SplitOmniglot":
         if cfg.model.pooling:
@@ -103,6 +121,17 @@ def get_benchmark_for_joint_training(cfg: Config) -> TBenchmark:
             _default_mnist_eval_transform.transforms.append(Pad(2, padding_mode="edge"))
             cfg.benchmark.input_size = (1, 32, 32)
         benchmark = SplitMNIST(n_experiences=1, seed=cfg.seed)
+
+    elif cfg.benchmark.name == "SplitFMNIST":
+        if cfg.model.pooling:
+            _default_fmnist_train_transform.transforms.append(
+                Pad(2, padding_mode="edge")
+            )
+            _default_fmnist_eval_transform.transforms.append(
+                Pad(2, padding_mode="edge")
+            )
+            cfg.benchmark.input_size = (1, 32, 32)
+        benchmark = SplitFMNIST(n_experiences=1, seed=cfg.seed)
 
     elif cfg.benchmark.name == "PermutedMNIST":
         if cfg.model.pooling:
