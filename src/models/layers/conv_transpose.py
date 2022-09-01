@@ -9,6 +9,7 @@ class ConvTransposeLayer(nn.Module):
         kernel_size: int,
         stride: int,
         flatten: bool = False,
+        activation: bool = True,
     ):
         """
         Single conv hidden layer with ReLU activation and dropout.
@@ -17,6 +18,7 @@ class ConvTransposeLayer(nn.Module):
         :param kernel_size: Kernel size.
         :param stride:  Stride of the convolution
         :param flatten: Whether to flatten the output.
+        :param activation: Whether to add ReLU activation.
         """
         super().__init__()
         layers = [
@@ -27,9 +29,9 @@ class ConvTransposeLayer(nn.Module):
                 stride=stride,
                 padding=1,
                 output_padding=0
-            ),
-            nn.ReLU(inplace=True),
-        ]
+            )]
+        if activation:
+            layers.append(nn.ReLU(inplace=True))
 
         if flatten:
             layers.append(nn.Flatten())
