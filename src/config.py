@@ -15,8 +15,8 @@ class Benchmark:
 class Strategy:
     name: str
 
-    # BasicBuffer strategy
-    memory_size: Union[int, list[int]]
+    # Buffer strategies strategy
+    memory_size: int
 
     # FeatureBuffer strategy
     replay_mb_size: Union[int, list[int]]

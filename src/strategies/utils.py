@@ -54,7 +54,7 @@ def get_training_strategy(
     elif cfg.strategy.name == "FeatureBuffer":
         strategy = BufferedFeatureReplayStrategy(
             model=model,
-            replay_memory_sizes=cfg.strategy.memory_size,
+            total_memory_size=cfg.strategy.memory_size,
             replay_mb_sizes=cfg.strategy.replay_mb_size,
             update_strategy=cfg.strategy.update_strategy,
             replay_slowdown=cfg.strategy.replay_slowdown,
