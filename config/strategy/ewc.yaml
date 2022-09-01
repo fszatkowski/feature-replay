@@ -1,2 +1,2 @@
 name: EWC
-ewc_lambda: 0.1
+ewc_lambda: 0.01
