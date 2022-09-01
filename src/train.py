@@ -144,7 +144,9 @@ def run(cfg: Config):
             evaluator=get_eval_plugin(cfg),
         )
     elif cfg.strategy.name == "Generative":
-        if cfg.benchmark.name == "SplitMNIST":
+        if cfg.benchmark.name == "CIFAR100":
+            benchmark = SplitCIFAR100(n_experiences=cfg.benchmark.n_experiences, seed=cfg.seed)
+        elif cfg.benchmark.name == "SplitMNIST":
             benchmark = SplitMNIST(n_experiences=cfg.benchmark.n_experiences, seed=cfg.seed)
         else:
             raise NotImplementedError()

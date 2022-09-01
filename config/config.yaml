@@ -1,13 +1,13 @@
 defaults:
   - _self_
   - benchmark:
-    - split_mnist
+    - CIFAR100
   - strategy:
     - generative
   - model:
     - mlp
   - generative_model:
-    - conv_vae
+    - mlp_vae
 
 training:
   train_epochs: 10
