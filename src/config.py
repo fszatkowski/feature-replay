@@ -30,6 +30,7 @@ class Strategy:
     # EWC
     ewc_lambda: float
 
+
 @dataclass
 class Model:
     name: str

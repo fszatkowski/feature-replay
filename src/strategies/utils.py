@@ -1,5 +1,5 @@
 import torch.nn
-from avalanche.training import AR1, LwF, EWC, CWRStar
+from avalanche.training import AR1, EWC, CWRStar, GDumb, LwF
 from avalanche.training.plugins import ReplayPlugin
 from avalanche.training.storage_policy import ExperienceBalancedBuffer
 from avalanche.training.supervised import JointTraining, Naive
@@ -79,6 +79,19 @@ def get_training_strategy(
             lr=cfg.training.optimizer.lr,
             momentum=cfg.training.optimizer.momentum,
             l2=cfg.training.optimizer.l2,
+            train_epochs=cfg.training.train_epochs,
+            train_mb_size=cfg.training.train_mb_size,
+            eval_mb_size=cfg.training.eval_mb_size,
+            device=cfg.device,
+            evaluator=get_eval_plugin(cfg),
+        )
+
+    elif cfg.strategy.name == "GDumb":
+        strategy = GDumb(
+            model=model,
+            mem_size=cfg.strategy.memory_size,
+            optimizer=optimizer,
+            criterion=criterion,
             train_epochs=cfg.training.train_epochs,
             train_mb_size=cfg.training.train_mb_size,
             eval_mb_size=cfg.training.eval_mb_size,
