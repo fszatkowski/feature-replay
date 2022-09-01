@@ -20,7 +20,8 @@ class Strategy:
 
     # FeatureBuffer strategy
     replay_mb_size: Union[int, list[int]]
-    replay_prob: Union[float, list[float]]
+    update_strategy: str
+    geo_strategy_base: Optional[float]
     replay_slowdown: float
 
     # LwF
