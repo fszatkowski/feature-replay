@@ -7,7 +7,7 @@ defaults:
   - model:
     - mlp
   - generative_model:
-    - mlp_vae
+    - conv_vae
 
 training:
   train_epochs: 10
