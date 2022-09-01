@@ -1,5 +1,4 @@
-import logging
-from typing import List, Optional, Union, cast
+from typing import List, Optional, Union
 
 import torch
 from avalanche.training.plugins import EvaluationPlugin, SupervisedPlugin
@@ -16,9 +15,9 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
     def __init__(
         self,
         model: FeatureReplayModel,
-        replay_memory_sizes: Union[int, list[int]],
+        update_strategy: str,
+        total_memory_size: int,
         replay_mb_sizes: Union[int, list[int]],
-        replay_probs: Union[float, list[float]],
         replay_slowdown: float,
         criterion: Optional[torch.nn.Module],
         lr: float,
@@ -35,13 +34,12 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
         """
         Buffered replay strategy done at multiple feature levels.
         :param model: Any model implementing FeatureReplayModel interface.
-        :param replay_memory_sizes: Buffer sizes for each feature level in model. If set to 0,
+        :param update_strategy: Replay update strategy.
+
+        :param total_memory_size: Buffer sizes for each feature level in model. If set to 0,
         buffer is not created for given level.
         :param replay_mb_sizes: Replay minibatch sizes for each layer. Defaults to `train_mb_size`
         for each feature level.
-        :param replay_probs: Replay probability for feature levels. At each training step, replay
-        level will be sampled based on these probabilities. Sum of the probabilities can not exceed
-        1., and if probabilities do not sum to 1., some training steps might skip replay.
         :param replay_slowdown: Learning rate multiplier for layers below feature replay level.
         This update is slowed down to prevent changing earlier layers too fast.
         """
@@ -71,18 +69,17 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
         )
 
         self.replay_slowdown = replay_slowdown
+        probs, memory_sizes = self.get_replay_params(
+            update_strategy=update_strategy,
+            total_memory_size=total_memory_size,
+            n_layers=model.n_layers(),
+        )
         self.buffers = RandomFeatureReplayManager(
-            memory_sizes=self.get_replay_memory_sizes(
-                replay_memory_sizes, n_layers=model.n_layers()
-            ),
+            memory_sizes=memory_sizes,
             batch_sizes=self.get_replay_mb_sizes(
                 replay_mb_sizes, n_layers=model.n_layers()
             ),
-            probs=self.get_replay_probs(
-                replay_probs,
-                replay_memory_sizes=replay_memory_sizes,
-                n_layers=model.n_layers(),
-            ),
+            probs=probs,
             clock=self.clock,
             device=device,
         )
@@ -179,38 +176,38 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
             return replay_mb_sizes
 
     @staticmethod
-    def get_replay_probs(
-        replay_probs: Union[float, list[float]],
-        replay_memory_sizes: Union[int, list[int]],
+    def get_replay_params(
+        update_strategy: str,
+        total_memory_size: int,
         n_layers: int,
-    ) -> list[float]:
-        replay_memory_sizes = BufferedFeatureReplayStrategy.get_replay_memory_sizes(
-            replay_memory_sizes, n_layers
-        )
-
-        if isinstance(replay_probs, float):
-            output_replay_probs = [
-                replay_probs if mem_size != 0 else 0 for mem_size in replay_memory_sizes
-            ]
+    ) -> tuple[list[float], list[int]]:
+        """
+        Computes replay probs for given strategy.
+        :param update_strategy: Name of the update strategy.
+        :param total_memory_size: Memory size to distribte across strategies.
+        :param n_layers: Number of model layers.
+        :return: Replay probabilities.
+        """
+        weights: list[Union[int, float]]
+        if update_strategy == "equal":
+            probs = [1 / n_layers for _ in range(n_layers)]
+        elif update_strategy == "only_first_layer":
+            probs = [0.0 for _ in range(n_layers)]
+            probs[0] = 1.0
+        elif update_strategy == "linear_ascending":
+            weights = [i + 1 for i in range(n_layers)]
+            probs = [weight / sum(weights) for weight in weights]
+        elif update_strategy == "linear_descending":
+            weights = [i + 1 for i in range(n_layers)]
+            probs = [weight / sum(weights) for weight in reversed(weights)]
+        elif update_strategy == "geometric_ascending":
+            weights = [2**i for i in range(n_layers)]
+            probs = [weight / sum(weights) for weight in weights]
+        elif update_strategy == "geometric_descending":
+            weights = [0.5**i for i in range(n_layers)]
+            probs = [weight / sum(weights) for weight in weights]
         else:
-            assert len(cast(list[float], replay_probs)) == n_layers
-            output_replay_probs = [
-                prob if mem_size != 0 else 0
-                for prob, mem_size in zip(
-                    cast(list[float], replay_probs), replay_memory_sizes
-                )
-            ]
+            raise NotImplementedError()
 
-        probs_sum = sum(p for p in output_replay_probs)
-        assert 0.0 <= probs_sum <= 1.0, (
-            f"Sum of replay probabilities should be between 0 and 1, but with "
-            f"`replay_probs`={replay_probs} obtained `self.replay_probs`={output_replay_probs} "
-            f"which sum to {probs_sum}."
-        )
-        if probs_sum < 1.0:
-            logging.warning(
-                f"Obtained probs {output_replay_probs} that don't sum to 1, but to {probs_sum}."
-                f"This might be an error."
-            )
-
-        return output_replay_probs
+        memory_sizes = [int(p * total_memory_size) for p in probs]
+        return probs, memory_sizes
