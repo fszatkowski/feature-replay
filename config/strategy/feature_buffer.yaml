@@ -1,5 +1,5 @@
 name: FeatureBuffer
 memory_size: 200
 replay_mb_size: 128
-replay_prob: 0.5
+update_strategy: equal
 replay_slowdown: 0.01

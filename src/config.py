@@ -8,19 +8,27 @@ class Benchmark:
     input_size: tuple[int, int, int]
     n_classes: int
     n_experiences: int
+    augmentations: bool
 
 
 @dataclass
 class Strategy:
     name: str
 
-    # BasicBuffer strategy
-    memory_size: Union[int, list[int]]
+    # Buffer strategies strategy
+    memory_size: int
 
     # FeatureBuffer strategy
     replay_mb_size: Union[int, list[int]]
-    replay_prob: Union[float, list[float]]
+    update_strategy: str
     replay_slowdown: float
+
+    # LwF
+    alpha: float
+    temperature: float
+
+    # EWC
+    ewc_lambda: float
 
 
 @dataclass
@@ -64,3 +72,4 @@ class Config:
     device: str
     wandb_entity: str
     wandb_project: str
+    output_model_path: Optional[str]

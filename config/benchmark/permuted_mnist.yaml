@@ -1,5 +1,5 @@
-name: SplitMNIST
+name: PermutedMNIST
 input_size: [1,28,28]
 n_classes: 10
-n_experiences: 5
+n_experiences: 10
 augmentations: false

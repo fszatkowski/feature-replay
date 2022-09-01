@@ -1,0 +1,5 @@
+name: SplitTinyImageNet
+input_size: [3,64,64]
+n_classes: 200
+n_experiences: 10
+augmentations: true

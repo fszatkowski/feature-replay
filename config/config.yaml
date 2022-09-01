@@ -24,3 +24,4 @@ device: cuda
 device_id: 0
 wandb_entity: cl-probing
 wandb_project: feature-replay
+output_model_path: null

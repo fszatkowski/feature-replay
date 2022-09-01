@@ -1,0 +1,5 @@
+name: SplitOmniglot
+input_size: [1,105,105]
+n_classes: 964
+n_experiences: 4
+augmentations: false
