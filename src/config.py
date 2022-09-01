@@ -12,26 +12,6 @@ class Benchmark:
 
 
 @dataclass
-class Strategy:
-    name: str
-
-    # Buffer strategies strategy
-    memory_size: int
-
-    # FeatureBuffer strategy
-    replay_mb_size: Union[int, list[int]]
-    update_strategy: str
-    replay_slowdown: float
-
-    # LwF
-    alpha: float
-    temperature: float
-
-    # EWC
-    ewc_lambda: float
-
-
-@dataclass
 class Model:
     name: str
 
@@ -43,6 +23,15 @@ class Model:
     channels: list[int]
     kernel_size: int
     pooling: bool
+
+@dataclass
+class GenerativeModel:
+    name: str
+    channels: list[int]
+    strides: list[int]
+    kernel_size: int
+    hidden_sizes: list[int]
+    nhid: int
 
 
 @dataclass
@@ -62,10 +51,40 @@ class Training:
 
 
 @dataclass
+class Generator:
+    training: Training
+
+
+@dataclass
+class Strategy:
+    name: str
+
+    # Buffer strategies strategy
+    memory_size: int
+
+    # FeatureBuffer strategy
+    replay_mb_size: Union[int, list[int]]
+    update_strategy: str
+    replay_slowdown: float
+
+    # Generative
+    generator: Generator
+    increasing_replay_size: bool
+
+    # LwF
+    alpha: float
+    temperature: float
+
+    # EWC
+    ewc_lambda: float
+
+
+@dataclass
 class Config:
     benchmark: Benchmark
     strategy: Strategy
     model: Model
+    generative_model: GenerativeModel
     training: Training
 
     seed: Optional[int]

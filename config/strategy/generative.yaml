@@ -1,0 +1,14 @@
+name: Generative
+
+replay_mb_size: 128
+increasing_replay_size: False
+
+generator:
+  training:
+    train_epochs: 10
+    train_mb_size: 128
+    eval_mb_size: 128
+    optimizer:
+      name: Adam
+      lr: 0.01
+      l2: 0.0001
