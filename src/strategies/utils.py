@@ -1,13 +1,18 @@
 import torch.nn
-from avalanche.training import EWC, CWRStar, GDumb, LwF
-from avalanche.training.plugins import ReplayPlugin
+from avalanche.models import VAE_loss
+from avalanche.training import EWC, CWRStar, GDumb, LwF, VAETraining
+from avalanche.training.plugins import ReplayPlugin, GenerativeReplayPlugin
 from avalanche.training.storage_policy import ExperienceBalancedBuffer
 from avalanche.training.supervised import JointTraining, Naive
 from avalanche.training.templates import SupervisedTemplate
+from torch.optim import Adam
 
 from config import Config
+from models.conv_vae import ConvVAE
 from models.feature_replay_model import FeatureReplayModel
+from models.mlp_vae import MlpVAE
 from plugins.eval import get_eval_plugin
+from strategies.basic_generative_replay import BasicGenerativeReplay
 from strategies.buffered_feature_replay import BufferedFeatureReplayStrategy
 
 
@@ -62,6 +67,65 @@ def get_training_strategy(
             momentum=cfg.training.optimizer.momentum,
             l2=cfg.training.optimizer.l2,
             **common_args
+        )
+
+    elif cfg.strategy.name == "Generative":
+        if cfg.generative_model.name == "MLPVAE":
+            generator_model = MlpVAE(
+                cfg.benchmark.input_size,
+                nhid=cfg.generative_model.nhid,
+                hidden_sizes=cfg.generative_model.hidden_sizes,
+                device=cfg.device,
+            )
+
+        elif cfg.generative_model.name == "ConvVAE":
+            generator_model = ConvVAE(
+                cfg.benchmark.input_size,
+                nhid=cfg.generative_model.nhid,
+                kernel_size=cfg.generative_model.kernel_size,
+                channels=cfg.generative_model.channels,
+                strides=cfg.generative_model.strides,
+                hidden_sizes=cfg.generative_model.hidden_sizes,
+                device=cfg.device,
+            )
+        else:
+            raise NotImplementedError()
+
+        if cfg.strategy.generator.training.optimizer.name == "Adam":
+            generator_optimizer = Adam(
+                filter(lambda p: p.requires_grad, generator_model.parameters()),
+                lr=cfg.strategy.generator.training.optimizer.lr,
+                weight_decay=cfg.strategy.generator.training.optimizer.l2,
+            )
+        else:
+            raise NotImplementedError()
+
+        generator_strategy = VAETraining(
+            model=generator_model,
+            optimizer=generator_optimizer,
+            criterion=VAE_loss,
+            train_mb_size=cfg.strategy.generator.training.train_mb_size,
+            train_epochs=cfg.strategy.generator.training.train_epochs,
+            eval_mb_size=cfg.strategy.generator.training.eval_mb_size,
+            device=cfg.device,
+            plugins=[
+                GenerativeReplayPlugin(
+                    replay_size=cfg.strategy.replay_mb_size,
+                    increasing_replay_size=cfg.strategy.increasing_replay_size,
+                )
+            ],
+        )
+
+        strategy = BasicGenerativeReplay(
+            model=model,
+            generator_strategy=generator_strategy,
+            optimizer=optimizer,
+            criterion=criterion,
+            train_epochs=cfg.training.train_epochs,
+            train_mb_size=cfg.training.train_mb_size,
+            eval_mb_size=cfg.training.eval_mb_size,
+            device=cfg.device,
+            evaluator=get_eval_plugin(cfg),
         )
 
     elif cfg.strategy.name == "CWRStar":
