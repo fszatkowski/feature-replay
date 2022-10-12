@@ -29,4 +29,6 @@ replay: true
 ewc_lambda: 0.0
 lwf_alpha: 0.0
 lwf_temperature: 1.0
+stop_replay_after: null
+
 output_dir: null

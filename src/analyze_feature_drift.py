@@ -60,13 +60,13 @@ def run(cfg: Config):
         eval_mb_size=cfg.training.eval_mb_size,
         device=cfg.device,
         evaluator=get_eval_plugin(cfg),
+        stop_replay_after=cfg.stop_replay_after
         # plugins=[replay_plugin]
     )
 
-    metrics = []
     for experience in benchmark.train_stream:
         strategy.train(experience)
-        metrics.append(strategy.eval(benchmark.test_stream))
+        strategy.eval(benchmark.test_stream)
 
     if cfg.output_dir is not None:
         output_dir = Path(cfg.output_dir)
@@ -75,8 +75,6 @@ def run(cfg: Config):
 
         with output_dir.joinpath("drift_stats.json").open("w+") as f:
             json.dump(drift_stats, f, indent=2)
-        with output_dir.joinpath("metrics.json").open("w+") as f:
-            json.dump(metrics, f, indent=2)
         with output_dir.joinpath("config.yml").open("w+") as f:
             OmegaConf.save(cfg, f)
         save_drift_plot(
@@ -88,9 +86,10 @@ def run(cfg: Config):
             ewc_lambda=cfg.ewc_lambda,
             lwf_alpha=cfg.lwf_alpha,
             lwf_temperature=cfg.lwf_temperature,
+            stop_replay_after=cfg.stop_replay_after,
             memory_size=cfg.strategy.memory_size,
         )
-        torch.save(model, str(cfg.output_dir / "model.pt"))
+        torch.save(model, str(output_dir / "model.pt"))
 
 
 if __name__ == "__main__":

@@ -40,12 +40,14 @@ def save_drift_plot(
     ewc_lambda: float = 0.0,
     lwf_alpha: float = 0.0,
     lwf_temperature: float = 0.0,
+    stop_replay_after: Optional[int] = None,
     memory_size: Optional[int] = None,
 ) -> None:
+    plt.figure()
     df = []
     for exp_idx, layers_info in drift_stats.items():
-        for layer_idx, drift_stats in layers_info.items():
-            for epoch, drift in enumerate(drift_stats):
+        for layer_idx, stats in layers_info.items():
+            for epoch, drift in enumerate(stats):
                 df.append(
                     {
                         "epoch": int(epoch + 1),
@@ -97,6 +99,11 @@ def save_drift_plot(
         if title:
             title += ", "
         title += f"replay, mem size: {memory_size}"
+    if stop_replay_after is not None:
+        assert replay
+        if title:
+            title += ", "
+        title += f"stop after: {stop_replay_after}"
     if ewc_lambda > 0:
         if title:
             title += ", "

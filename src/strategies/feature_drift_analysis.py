@@ -35,6 +35,7 @@ class FeatureDriftAnalysisStrategy(SupervisedTemplate):
         train_mb_size: int,
         eval_mb_size: int,
         device: str,
+        stop_replay_after: Optional[int] = None,
         plugins: Optional[List[SupervisedPlugin]] = None,
         evaluator: EvaluationPlugin = default_evaluator,
         eval_every=-1,
@@ -57,14 +58,14 @@ class FeatureDriftAnalysisStrategy(SupervisedTemplate):
         self.momentum = momentum
         self.l2 = l2
 
-        if ewc_lambda > 0:
+        if ewc_lambda > 0.0:
             ewc = EWCPlugin(ewc_lambda, mode="separate")
             if plugins is None:
                 plugins = [ewc]
             else:
                 plugins.append(ewc)
 
-        if lwf_alpha > 0:
+        if lwf_alpha > 0.0:
             lwf = LwFPlugin(lwf_alpha, lwf_temperature)
             if plugins is None:
                 plugins = [lwf]
@@ -92,11 +93,13 @@ class FeatureDriftAnalysisStrategy(SupervisedTemplate):
             n_layers=model.n_layers(),
         )
         self.replay = replay
+        self.stop_replay_after = stop_replay_after
 
     def _before_training_exp(self, **kwargs):
         super()._before_training_exp(**kwargs)
         if self.replay:
             if len(self.drift_buffer.buffer[0]) > 0:
+                self.orig_dataloader = self.dataloader
                 x_ds, y_ds, t_ds = [], [], []
                 for exp_id, buffer in self.drift_buffer.buffer.items():
                     for x, y in buffer:
@@ -118,6 +121,15 @@ class FeatureDriftAnalysisStrategy(SupervisedTemplate):
                     batch_size_mem=batch_size,
                     shuffle=True,
                 )
+
+    def _before_training_epoch(self, **kwargs):
+        if (
+            self.clock.train_exp_counter > 0
+            and self.stop_replay_after is not None
+            and self.stop_replay_after == self.clock.train_exp_epochs
+        ):
+            self.dataloader = self.orig_dataloader
+        super()._before_training_epoch(**kwargs)
 
     def _after_training_exp(self, **kwargs):
         self.drift_buffer.after_training_exp(strategy=self)
