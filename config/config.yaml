@@ -1,7 +1,7 @@
 defaults:
   - _self_
   - benchmark:
-    - split_mnist
+    - split_fmnist
   - strategy:
     - naive
   - model:
@@ -17,9 +17,12 @@ training:
     momentum: 0.9
     l2: 0.0
 
+wandb:
+  enable: True
+  entity: cl-probing
+  project: feature-replay
+
+output_dir: null
 seed: 0
 device: cuda
 device_id: 0
-wandb_entity: cl-probing
-wandb_project: feature-replay
-output_model_path: null
