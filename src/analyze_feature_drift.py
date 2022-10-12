@@ -7,9 +7,11 @@ import hydra
 import numpy as np
 import torch
 from omegaconf import OmegaConf
+
 from benchmarks.utils import get_benchmark
 from config import Config
 from models.utils import get_model
+from plugins.eval import get_eval_plugin
 from strategies.drift.plot_drift import save_drift_plot
 from strategies.feature_drift_analysis import FeatureDriftAnalysisStrategy
 
@@ -22,8 +24,11 @@ ROOT = Path(__file__).parent.parent
     version_base="1.2",
 )
 def run(cfg: Config):
-    if cfg.output_model_path is not None and Path(cfg.output_model_path).exists():
-        logging.info(f"Model at {cfg.output_model_path} already exists, skipping training.")
+    if (
+        cfg.output_dir is not None
+        and Path(cfg.output_dir).joinpath("model.pt").exists()
+    ):
+        logging.info(f"Model at {cfg.output_dir} already exists, skipping training.")
         exit()
 
     if cfg.seed is not None:
@@ -41,6 +46,8 @@ def run(cfg: Config):
         model=model,
         replay=cfg.replay,
         ewc_lambda=cfg.ewc_lambda,
+        lwf_alpha=cfg.lwf_alpha,
+        lwf_temperature=cfg.lwf_temperature,
         memory_size=cfg.strategy.memory_size,
         n_experiences=benchmark.n_experiences,
         n_classes=benchmark.n_classes,
@@ -52,7 +59,7 @@ def run(cfg: Config):
         train_mb_size=cfg.training.train_mb_size,
         eval_mb_size=cfg.training.eval_mb_size,
         device=cfg.device,
-        # evaluator=get_eval_plugin(cfg),
+        evaluator=get_eval_plugin(cfg),
         # plugins=[replay_plugin]
     )
 
@@ -61,8 +68,8 @@ def run(cfg: Config):
         strategy.train(experience)
         metrics.append(strategy.eval(benchmark.test_stream))
 
-    if cfg.output_model_path is not None:
-        output_dir = Path(cfg.output_model_path).parent
+    if cfg.output_dir is not None:
+        output_dir = Path(cfg.output_dir)
         output_dir.mkdir(exist_ok=True, parents=True)
         drift_stats = strategy.drift_buffer.per_exp_drift
 
@@ -79,9 +86,11 @@ def run(cfg: Config):
             model_name=cfg.model.name,
             replay=cfg.replay,
             ewc_lambda=cfg.ewc_lambda,
+            lwf_alpha=cfg.lwf_alpha,
+            lwf_temperature=cfg.lwf_temperature,
             memory_size=cfg.strategy.memory_size,
         )
-        torch.save(model, cfg.output_model_path)
+        torch.save(model, str(cfg.output_dir / "model.pt"))
 
 
 if __name__ == "__main__":

@@ -17,9 +17,16 @@ training:
     momentum: 0.9
     l2: 0.0
 
+wandb:
+  enable: True
+  entity: cl-probing
+  project: feature-replay
+
 seed: 0
 device: cuda
 device_id: 0
 replay: true
 ewc_lambda: 0.0
-output_model_path: null
+lwf_alpha: 0.0
+lwf_temperature: 1.0
+output_dir: null

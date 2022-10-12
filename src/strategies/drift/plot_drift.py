@@ -11,12 +11,12 @@ sns.set_style("darkgrid")
 
 
 def main(
-        input_path: Path,
-        output_path: Path,
-        benchmark: Optional[str] = typer.Option(None, "-b", "--benchmark"),
-        model_name: Optional[str] = typer.Option(None, "-m", "--model_name"),
-        replay: bool = typer.Option(False, "-r", "--replay"),
-        memory_size: Optional[int] = typer.Option(None, "-s", "--memory_size"),
+    input_path: Path,
+    output_path: Path,
+    benchmark: Optional[str] = typer.Option(None, "-b", "--benchmark"),
+    model_name: Optional[str] = typer.Option(None, "-m", "--model_name"),
+    replay: bool = typer.Option(False, "-r", "--replay"),
+    memory_size: Optional[int] = typer.Option(None, "-s", "--memory_size"),
 ):
     with input_path.open("r") as f:
         stats = json.load(f)
@@ -32,13 +32,15 @@ def main(
 
 
 def save_drift_plot(
-        drift_stats: dict,
-        output_path: Path,
-        benchmark: Optional[str] = None,
-        model_name: Optional[str] = None,
-        replay: bool = False,
-        ewc_lambda: float = 0.,
-        memory_size: Optional[int] = None,
+    drift_stats: dict,
+    output_path: Path,
+    benchmark: Optional[str] = None,
+    model_name: Optional[str] = None,
+    replay: bool = False,
+    ewc_lambda: float = 0.0,
+    lwf_alpha: float = 0.0,
+    lwf_temperature: float = 0.0,
+    memory_size: Optional[int] = None,
 ) -> None:
     df = []
     for exp_idx, layers_info in drift_stats.items():
@@ -99,6 +101,10 @@ def save_drift_plot(
         if title:
             title += ", "
         title += f"EWC lambda: {ewc_lambda}"
+    if lwf_alpha > 0:
+        if title:
+            title += ", "
+        title += f"LWF alpha: {lwf_alpha}, LWF temp: {lwf_temperature}"
     plot.set_title(title)
     plt.tight_layout()
     plt.savefig(output_path)

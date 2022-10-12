@@ -5,11 +5,13 @@ from avalanche.benchmarks.utils import AvalancheDataset
 from avalanche.benchmarks.utils.data_loader import ReplayDataLoader
 from avalanche.training.plugins import EvaluationPlugin, SupervisedPlugin
 from avalanche.training.plugins.evaluation import default_evaluator
+from avalanche.training.plugins.ewc import EWCPlugin
+from avalanche.training.plugins.lwf import LwFPlugin
 from avalanche.training.templates.supervised import SupervisedTemplate
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from torch.utils.data import TensorDataset
-from avalanche.training.plugins.ewc import EWCPlugin
+
 from models.feature_replay_model import FeatureReplayModel
 from strategies.drift.buffer import DriftAnalysisBuffer
 
@@ -24,6 +26,8 @@ class FeatureDriftAnalysisStrategy(SupervisedTemplate):
         n_classes: int,
         replay: bool,
         ewc_lambda: float,
+        lwf_alpha: float,
+        lwf_temperature: float,
         lr: float,
         momentum: float,
         l2: float,
@@ -59,6 +63,13 @@ class FeatureDriftAnalysisStrategy(SupervisedTemplate):
                 plugins = [ewc]
             else:
                 plugins.append(ewc)
+
+        if lwf_alpha > 0:
+            lwf = LwFPlugin(lwf_alpha, lwf_temperature)
+            if plugins is None:
+                plugins = [lwf]
+            else:
+                plugins.append(lwf)
 
         super().__init__(
             model,
