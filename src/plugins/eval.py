@@ -7,7 +7,7 @@ from avalanche.evaluation.metrics import (
     forgetting_metrics,
     loss_metrics,
 )
-from avalanche.logging import InteractiveLogger, WandBLogger, CSVLogger
+from avalanche.logging import CSVLogger, InteractiveLogger, WandBLogger
 from avalanche.training.plugins import EvaluationPlugin
 
 from config import Config
