@@ -62,14 +62,20 @@ class Training:
 
 
 @dataclass
+class Wandb:
+    enable: bool
+    entity: str
+    project: str
+
+
+@dataclass
 class Config:
     benchmark: Benchmark
     strategy: Strategy
     model: Model
     training: Training
+    wandb: Wandb
 
     seed: Optional[int]
     device: str
-    wandb_entity: str
-    wandb_project: str
-    output_model_path: Optional[str]
+    output_dir: Optional[str]

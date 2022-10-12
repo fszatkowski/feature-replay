@@ -1,7 +1,10 @@
+import logging
 from typing import Union
 
 from avalanche.benchmarks import (
+    PermutedMNIST,
     SplitCIFAR100,
+    SplitFMNIST,
     SplitMNIST,
     SplitOmniglot,
     SplitTinyImageNet,
@@ -11,12 +14,10 @@ from avalanche.benchmarks.classic.ccifar100 import (
     _default_cifar100_train_transform,
 )
 from avalanche.benchmarks.classic.cfashion_mnist import (
-    SplitFMNIST,
     _default_fmnist_eval_transform,
     _default_fmnist_train_transform,
 )
 from avalanche.benchmarks.classic.cmnist import (
-    PermutedMNIST,
     _default_mnist_eval_transform,
     _default_mnist_train_transform,
 )
@@ -38,133 +39,72 @@ TBenchmark = Union[SplitCIFAR100, SplitMNIST, SplitOmniglot, SplitTinyImageNet]
 
 
 def get_benchmark(cfg: Config) -> TBenchmark:
-    if cfg.benchmark.name == "CIFAR100":
-        if cfg.benchmark.augmentations:
-            train_transform = _default_cifar100_train_transform
-        else:
-            train_transform = _default_cifar100_eval_transform
-        benchmark = SplitCIFAR100(
-            n_experiences=cfg.benchmark.n_experiences,
-            seed=cfg.seed,
-            train_transform=train_transform,
-        )
-
-    elif cfg.benchmark.name == "SplitMNIST":
-        if cfg.model.pooling:
-            _default_mnist_train_transform.transforms.append(
-                Pad(2, padding_mode="edge")
-            )
-            _default_mnist_eval_transform.transforms.append(Pad(2, padding_mode="edge"))
-            cfg.benchmark.input_size = (1, 32, 32)
-        benchmark = SplitMNIST(n_experiences=cfg.benchmark.n_experiences, seed=cfg.seed)
-
-    elif cfg.benchmark.name == "SplitFMNIST":
-        if cfg.model.pooling:
-            _default_fmnist_train_transform.transforms.append(
-                Pad(2, padding_mode="edge")
-            )
-            _default_fmnist_eval_transform.transforms.append(
-                Pad(2, padding_mode="edge")
-            )
-            cfg.benchmark.input_size = (1, 32, 32)
-        benchmark = SplitFMNIST(
-            n_experiences=cfg.benchmark.n_experiences, seed=cfg.seed
-        )
-
-    elif cfg.benchmark.name == "SplitOmniglot":
-        if cfg.model.pooling:
-            _default_omniglot_train_transform.transforms.append(
-                Pad((11, 11, 12, 12), padding_mode="edge")
-            )
-            _default_omniglot_eval_transform.transforms.append(
-                Pad((11, 11, 12, 12), padding_mode="edge")
-            )
-            cfg.benchmark.input_size = (1, 128, 128)
-        benchmark = SplitOmniglot(
-            n_experiences=cfg.benchmark.n_experiences, seed=cfg.seed
-        )
-
-    elif cfg.benchmark.name == "SplitTinyImageNet":
-        if cfg.benchmark.augmentations:
-            train_transform = _default_tinyimagenet_train_transform
-        else:
-            train_transform = _default_imagenet_eval_transform
-        benchmark = SplitTinyImageNet(
-            n_experiences=cfg.benchmark.n_experiences,
-            seed=cfg.seed,
-            train_transform=train_transform,
-        )
-
+    if cfg.strategy.name == "JointTraining":
+        n_experiences = 1
     else:
-        raise NotImplementedError()
+        n_experiences = cfg.benchmark.n_experiences
 
-    return benchmark
-
-
-def get_benchmark_for_joint_training(cfg: Config) -> TBenchmark:
     if cfg.benchmark.name == "CIFAR100":
-        if cfg.benchmark.augmentations:
-            train_transform = _default_cifar100_train_transform
-        else:
-            train_transform = _default_cifar100_eval_transform
-        benchmark = SplitCIFAR100(
-            n_experiences=1,
-            seed=cfg.seed,
-            train_transform=train_transform,
-        )
-
-    elif cfg.benchmark.name == "SplitMNIST":
-        if cfg.model.pooling:
-            _default_mnist_train_transform.transforms.append(
-                Pad(2, padding_mode="edge")
-            )
-            _default_mnist_eval_transform.transforms.append(Pad(2, padding_mode="edge"))
-            cfg.benchmark.input_size = (1, 32, 32)
-        benchmark = SplitMNIST(n_experiences=1, seed=cfg.seed)
-
-    elif cfg.benchmark.name == "SplitFMNIST":
-        if cfg.model.pooling:
-            _default_fmnist_train_transform.transforms.append(
-                Pad(2, padding_mode="edge")
-            )
-            _default_fmnist_eval_transform.transforms.append(
-                Pad(2, padding_mode="edge")
-            )
-            cfg.benchmark.input_size = (1, 32, 32)
-        benchmark = SplitFMNIST(n_experiences=1, seed=cfg.seed)
-
+        benchmark_class = SplitCIFAR100
+        train_transform = _default_cifar100_train_transform
+        eval_transform = _default_cifar100_eval_transform
     elif cfg.benchmark.name == "PermutedMNIST":
-        if cfg.model.pooling:
-            _default_mnist_train_transform.transforms.append(
-                Pad(2, padding_mode="edge")
-            )
-            _default_mnist_eval_transform.transforms.append(Pad(2, padding_mode="edge"))
-            cfg.benchmark.input_size = (1, 32, 32)
-        benchmark = PermutedMNIST(n_experiences=1, seed=cfg.seed)
-
+        benchmark_class = PermutedMNIST
+        train_transform = _default_mnist_train_transform
+        eval_transform = _default_mnist_eval_transform
+    elif cfg.benchmark.name == "SplitFMNIST":
+        benchmark_class = SplitFMNIST
+        train_transform = _default_fmnist_train_transform
+        eval_transform = _default_fmnist_eval_transform
+    elif cfg.benchmark.name == "SplitMNIST":
+        benchmark_class = SplitMNIST
+        train_transform = _default_mnist_train_transform
+        eval_transform = _default_mnist_eval_transform
     elif cfg.benchmark.name == "SplitOmniglot":
-        if cfg.model.pooling:
-            _default_omniglot_train_transform.transforms.append(
-                Pad((11, 11, 12, 12), padding_mode="edge")
-            )
-            _default_omniglot_eval_transform.transforms.append(
-                Pad((11, 11, 12, 12), padding_mode="edge")
-            )
-            cfg.benchmark.input_size = (1, 128, 128)
-        benchmark = SplitOmniglot(n_experiences=1, seed=cfg.seed)
-
+        benchmark_class = SplitOmniglot
+        train_transform = _default_omniglot_train_transform
+        eval_transform = _default_omniglot_eval_transform
     elif cfg.benchmark.name == "SplitTinyImageNet":
-        if cfg.benchmark.augmentations:
-            train_transform = _default_tinyimagenet_train_transform
-        else:
-            train_transform = _default_imagenet_eval_transform
-        benchmark = SplitTinyImageNet(
-            n_experiences=1,
-            seed=cfg.seed,
-            train_transform=train_transform,
-        )
-
+        benchmark_class = SplitTinyImageNet
+        train_transform = _default_tinyimagenet_train_transform
+        eval_transform = _default_imagenet_eval_transform
     else:
         raise NotImplementedError()
 
-    return benchmark
+    model_has_pooling_layers = hasattr(cfg.model, "pooling") and cfg.model.pooling
+    benchmark_requires_padding = cfg.benchmark.name in [
+        "PermutedMNIST",
+        "SplitFMNIST",
+        "SplitMNIST",
+        "SplitOmniglot",
+    ]
+    if model_has_pooling_layers and benchmark_requires_padding:
+        logging.warning(
+            "Using ConvMLP with pooling layers requires input sizes to be powers of "
+            "2. Datasets will be padded to required size."
+        )
+
+        padding: Union[int, tuple[int, int, int, int]]
+        if cfg.benchmark.name in [
+            "PermutedMNIST",
+            "SplitFMNIST",
+            "SplitMNIST",
+        ]:
+            padding = 2
+            input_size = (1, 32, 32)
+        elif cfg.benchmark.name == "SplitOmniglot":
+            padding = (11, 11, 12, 12)
+            input_size = (1, 128, 128)
+        else:
+            raise NotImplementedError()
+
+        train_transform.transforms.append(Pad(padding, padding_mode="edge"))
+        eval_transform.transforms.append(Pad(padding, padding_mode="edge"))
+        cfg.benchmark.input_size = input_size
+
+    if cfg.benchmark.augmentations:
+        train_transform = eval_transform
+
+    return benchmark_class(
+        n_experiences=n_experiences, seed=cfg.seed, train_transform=train_transform
+    )

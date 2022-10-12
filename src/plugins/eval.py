@@ -7,7 +7,7 @@ from avalanche.evaluation.metrics import (
     forgetting_metrics,
     loss_metrics,
 )
-from avalanche.logging import InteractiveLogger, WandBLogger
+from avalanche.logging import InteractiveLogger, WandBLogger, CSVLogger
 from avalanche.training.plugins import EvaluationPlugin
 
 from config import Config
@@ -19,11 +19,15 @@ def get_eval_plugin(cfg: Config) -> EvaluationPlugin:
         cfg, resolve=True, throw_on_missing=True
     )
 
-    interactive_logger = InteractiveLogger()
-    os.environ["WANDB_ENTITY"] = cfg.wandb_entity
-    wandb_logger = WandBLogger(
-        project_name=cfg.wandb_project, run_name=run_name, config=cfg_dict
-    )
+    loggers = [InteractiveLogger(), CSVLogger(log_folder=cfg.output_dir)]
+
+    if cfg.wandb.enable:
+        os.environ["WANDB_ENTITY"] = cfg.wandb.entity
+        wandb_logger = WandBLogger(
+            project_name=cfg.wandb.project, run_name=run_name, config=cfg_dict
+        )
+        loggers.append(wandb_logger)
+
     eval_plugin = EvaluationPlugin(
         accuracy_metrics(
             minibatch=True,
@@ -42,10 +46,10 @@ def get_eval_plugin(cfg: Config) -> EvaluationPlugin:
         forgetting_metrics(experience=True, stream=True),
         confusion_matrix_metrics(
             stream=True,
-            wandb=True,
+            wandb=cfg.wandb.enable,
             class_names=[str(i) for i in range(cfg.benchmark.n_classes)],
         ),
-        loggers=[interactive_logger, wandb_logger],
+        loggers=loggers,
     )
 
     return eval_plugin

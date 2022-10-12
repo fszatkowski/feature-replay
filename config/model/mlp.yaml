@@ -1,3 +1,3 @@
 name: MLP
-hidden_sizes: [ 512 ]
-dropout_ratio: 0.5
+hidden_sizes: [ 300, 300, 300 ]
+dropout_ratio: 0.0
