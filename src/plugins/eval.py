@@ -1,4 +1,5 @@
 import os
+import time
 
 import omegaconf
 from avalanche.evaluation.metrics import (
@@ -13,8 +14,11 @@ from avalanche.training.plugins import EvaluationPlugin
 from config import Config
 
 
-def get_eval_plugin(cfg: Config) -> EvaluationPlugin:
-    run_name = f"{cfg.benchmark.name}_{cfg.strategy.name}_{cfg.model.name}"
+def get_eval_plugin(cfg: Config, n_classes: int) -> EvaluationPlugin:
+    strategy_name = cfg.strategy.base
+    if cfg.strategy.plugins:
+        strategy_name = "_" + "_".join(sorted(cfg.strategy.plugins))
+    run_name = f"{cfg.benchmark.name}_{strategy_name}-{time.strftime('%Y%m%d-%H%M%S')}"
     cfg_dict = omegaconf.OmegaConf.to_container(
         cfg, resolve=True, throw_on_missing=True
     )
@@ -47,7 +51,7 @@ def get_eval_plugin(cfg: Config) -> EvaluationPlugin:
         confusion_matrix_metrics(
             stream=True,
             wandb=cfg.wandb.enable,
-            class_names=[str(i) for i in range(cfg.benchmark.n_classes)],
+            class_names=[str(i) for i in range(n_classes)],
         ),
         loggers=loggers,
     )

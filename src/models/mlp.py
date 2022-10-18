@@ -12,7 +12,7 @@ class MLP(FeatureReplayModel):
         num_classes: int,
         input_size: int,
         hidden_sizes: Optional[list[int]] = None,
-        dropout_ratio: float = 0.5,
+        dropout_ratio: float = 0.0,
     ):
         """
         Multi-Layer Perceptron with custom parameters and support for partial inference from

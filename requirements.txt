@@ -5,3 +5,4 @@ hydra-core==1.2.0
 isort==5.10.1
 mypy==0.961
 pytest==7.1.2
+pytest-xdist==2.5.0
