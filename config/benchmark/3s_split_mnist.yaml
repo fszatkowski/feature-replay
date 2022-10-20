@@ -4,9 +4,7 @@ dataset:
   name: SplitMNIST
   augmentations: false
   padding: null
-  input_size: [1, 28, 28]
-  train_per_class_sample_limit: null
-  test_per_class_sample_limit: null
+  input_size: [ 1, 28, 28 ]
 n_experiences: 5
 model:
   name: MLP

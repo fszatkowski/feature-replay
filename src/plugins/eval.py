@@ -4,7 +4,6 @@ import time
 import omegaconf
 from avalanche.evaluation.metrics import (
     accuracy_metrics,
-    confusion_matrix_metrics,
     forgetting_metrics,
     loss_metrics,
 )
@@ -14,7 +13,7 @@ from avalanche.training.plugins import EvaluationPlugin
 from config import Config
 
 
-def get_eval_plugin(cfg: Config, n_classes: int) -> EvaluationPlugin:
+def get_eval_plugin(cfg: Config) -> EvaluationPlugin:
     strategy_name = cfg.strategy.base
     if cfg.strategy.plugins:
         strategy_name = "_" + "_".join(sorted(cfg.strategy.plugins))
@@ -34,25 +33,20 @@ def get_eval_plugin(cfg: Config, n_classes: int) -> EvaluationPlugin:
 
     eval_plugin = EvaluationPlugin(
         accuracy_metrics(
-            minibatch=True,
+            minibatch=False,
             epoch=True,
-            epoch_running=True,
+            epoch_running=False,
             experience=True,
             stream=True,
         ),
         loss_metrics(
-            minibatch=True,
+            minibatch=False,
             epoch=True,
-            epoch_running=True,
+            epoch_running=False,
             experience=True,
             stream=True,
         ),
         forgetting_metrics(experience=True, stream=True),
-        confusion_matrix_metrics(
-            stream=True,
-            wandb=cfg.wandb.enable,
-            class_names=[str(i) for i in range(n_classes)],
-        ),
         loggers=loggers,
     )
 

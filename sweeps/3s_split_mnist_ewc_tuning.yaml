@@ -1,0 +1,20 @@
+program: src/train.py
+method: grid
+metric:
+  goal: maximize
+  name: Top1_Acc_Stream/eval_phase/test_stream/Task000
+parameters:
+  benchmark:
+    values: ["3s_split_mnist"]
+  strategy.base:
+    values: [ Naive ]
+  strategy.plugins:
+    values: [ [ ewc ] ]
+  strategy.ewc_lambda:
+    values: [ 0.01, 0.05, 0.1, 0.5, 1, 5, 10, 50, 100]
+
+command:
+  - ${env}
+  - python
+  - ${program}
+  - ${args_no_hyphens}

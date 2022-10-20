@@ -4,9 +4,7 @@ dataset:
   name: PermutedMNIST
   augmentations: false
   padding: 2
-  input_size: [1, 32, 32]
-  train_per_class_sample_limit: null
-  test_per_class_sample_limit: null
+  input_size: [ 1, 32, 32 ]
 n_experiences: 10
 model:
   name: MLP

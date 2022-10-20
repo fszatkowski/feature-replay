@@ -1,16 +1,22 @@
 defaults:
   - _self_
   - benchmark:
-    - 3s_split_mnist
+      - 3s_split_mnist
+
+benchmark:
+  dataset:
+    train_per_class_sample_limit: null
+    test_per_class_sample_limit: null
 
 strategy:
   base: Naive
-  plugins: []
+  plugins: [ ]
   memory_size: 1000
   constant_memory: true
   ewc_lambda: 1.0
   lwf_alpha: 1.0
   lwf_temperature: 1.0
+  rpf_probs: [ 0.5, 0.5 ]
 
 wandb:
   enable: True

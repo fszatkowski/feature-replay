@@ -8,9 +8,10 @@ from benchmarks.ci import ClassIncrementalBenchmark
 from config import Config
 from models.feature_replay_model import FeatureReplayModel
 from plugins.eval import get_eval_plugin
+from plugins.selective_freezing import RandomPartialFreezingPlugin
 from strategies.buffered_feature_replay import BufferedFeatureReplayStrategy
 
-AVAILABLE_PLUGINS = ["replay", "gdumb", "ewc", "lwf"]
+AVAILABLE_PLUGINS = ["replay", "gdumb", "ewc", "lwf", "rpf"]
 
 
 def get_training_strategy(
@@ -35,7 +36,7 @@ def get_training_strategy(
         train_mb_size=cfg.benchmark.hparams.train_mb_size,
         eval_mb_size=cfg.benchmark.hparams.eval_mb_size,
         device=cfg.device,
-        evaluator=get_eval_plugin(cfg, n_classes=benchmark.n_classes),
+        evaluator=get_eval_plugin(cfg),
     )
 
     if cfg.strategy.base == "Cumulative":
@@ -84,6 +85,8 @@ def get_training_strategy(
                     temperature=cfg.strategy.lwf_temperature,
                 )
             )
+        if "rpf" in cfg.strategy.plugins:
+            plugins.append(RandomPartialFreezingPlugin(probs=cfg.strategy.rpf_probs))
 
         strategy = Naive(model=model, plugins=plugins, **common_args)
 

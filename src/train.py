@@ -1,19 +1,23 @@
 import json
+import os
 import random
 import time
 from pathlib import Path
 
 import hydra
 import numpy as np
+import omegaconf
 import torch
 from omegaconf import OmegaConf
 
+import wandb
 from benchmarks.ci import ClassIncrementalBenchmark
 from config import Config
 from models.utils import get_model
 from strategies.utils import get_training_strategy
 
 ROOT = Path(__file__).parent.parent
+os.environ["WANDB_START_METHOD"] = "thread"
 
 
 @hydra.main(
@@ -24,6 +28,11 @@ def run_main(cfg: Config):
 
 
 def run(cfg: Config) -> None:
+    if cfg.wandb.enable:
+        wandb.config = omegaconf.OmegaConf.to_container(
+            cfg, resolve=True, throw_on_missing=True
+        )
+
     if cfg.seed is not None:
         torch.manual_seed(cfg.seed)
         # torch.use_deterministic_algorithms(True)
