@@ -1,3 +1,4 @@
+import pytest
 from commons import run_with_overrides
 
 
@@ -5,18 +6,22 @@ def run_3s_permuted_mnist_test(overrides: list[str]) -> None:
     run_with_overrides(["benchmark=3s_permuted_mnist"] + overrides)
 
 
+@pytest.mark.e2e
 def test_3s_permuted_mnist_default() -> None:
     run_3s_permuted_mnist_test([])
 
 
+@pytest.mark.e2e
 def test_3s_permuted_mnist_naive() -> None:
     run_3s_permuted_mnist_test(["strategy.base=Naive"])
 
 
+@pytest.mark.e2e
 def test_3s_permuted_mnist_cumulative() -> None:
     run_3s_permuted_mnist_test(["strategy.base=Cumulative"])
 
 
+@pytest.mark.e2e
 def test_3s_permuted_mnist_replay_const_memory() -> None:
     run_3s_permuted_mnist_test(
         [
@@ -27,6 +32,7 @@ def test_3s_permuted_mnist_replay_const_memory() -> None:
     )
 
 
+@pytest.mark.e2e
 def test_3s_permuted_mnist_replay_adaptive_memory() -> None:
     run_3s_permuted_mnist_test(
         [
@@ -37,6 +43,7 @@ def test_3s_permuted_mnist_replay_adaptive_memory() -> None:
     )
 
 
+@pytest.mark.e2e
 def test_3s_permuted_mnist_gdumb() -> None:
     run_3s_permuted_mnist_test(
         [
@@ -47,6 +54,7 @@ def test_3s_permuted_mnist_gdumb() -> None:
     )
 
 
+@pytest.mark.e2e
 def test_3s_permuted_mnist_ewc() -> None:
     run_3s_permuted_mnist_test(
         [
@@ -57,6 +65,7 @@ def test_3s_permuted_mnist_ewc() -> None:
     )
 
 
+@pytest.mark.e2e
 def test_3s_permuted_mnist_lwf() -> None:
     run_3s_permuted_mnist_test(
         [
