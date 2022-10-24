@@ -13,7 +13,7 @@ parameters:
   strategy.memory_size:
     values: [ 2000 ]
   strategy.rpf_probs:
-    values: [ [ 1.0, 0.0 ], [ 0.8, 0.2 ], [ 0.6, 0.4 ], [ 0.5,0.5 ], [ 0.4, 0.6 ], [ 0.2, 0.8 ] ]
+    values: [ [ 1.0, 0.0, 0.0 ], [ 0.5, 0.25, 0.25 ], [ 0.25, 0.5, 0.25 ], [ 0.25, 0.25, 0.5 ] ]
 
 command:
   - ${env}

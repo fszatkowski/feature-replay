@@ -98,6 +98,7 @@ class Wandb:
     enable: bool
     entity: str
     project: str
+    tags: Optional[list[str]]
 
 
 @dataclass

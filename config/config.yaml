@@ -15,13 +15,14 @@ strategy:
   constant_memory: true
   ewc_lambda: 1.0
   lwf_alpha: 1.0
-  lwf_temperature: 1.0
+  lwf_temperature: 2.0
   rpf_probs: [ 0.5, 0.5 ]
 
 wandb:
   enable: True
   entity: cl-probing
   project: feature-replay
+  tags: null
 
 output_dir: null
 save_model: false
