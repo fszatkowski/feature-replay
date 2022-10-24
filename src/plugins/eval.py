@@ -2,7 +2,6 @@ import os
 import time
 
 import omegaconf
-import wandb
 from avalanche.evaluation.metrics import (
     accuracy_metrics,
     forgetting_metrics,
@@ -31,7 +30,10 @@ def get_eval_plugin(cfg: Config) -> EvaluationPlugin:
         if cfg.wandb.tags is not None:
             params["tags"] = cfg.wandb.tags
         wandb_logger = WandBLogger(
-            project_name=cfg.wandb.project, run_name=run_name, config=cfg_dict, params=params
+            project_name=cfg.wandb.project,
+            run_name=run_name,
+            config=cfg_dict,
+            params=params,
         )
         loggers.append(wandb_logger)
 
