@@ -1,0 +1,21 @@
+name: facil_cifar100_10
+desc: CIFAR100 scenario with 10 tasks from FACIL
+dataset:
+  name: CIFAR100
+  augmentations: true
+  padding: null
+  input_size: [ 3, 32, 32 ]
+n_experiences: 5
+model:
+  name: ResNet
+  num_blocks: [ 2, 2, 2, 2 ]
+  slim: False
+hparams:
+  train_epochs: 200
+  train_mb_size: 128
+  replay_mb_size: null
+  eval_mb_size: 128
+  optimizer: SGD
+  momentum: 0.9
+  l2: 0.0002
+  lr: 0.001

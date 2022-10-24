@@ -3,7 +3,7 @@ from config import Config
 from models.conv_mlp import ConvMLP
 from models.feature_replay_model import FeatureReplayModel
 from models.mlp import MLP
-from models.resnet18 import ResNet18
+from models.resnet import ResNet
 
 
 def get_model(cfg: Config, benchmark: ClassIncrementalBenchmark) -> FeatureReplayModel:
@@ -32,7 +32,11 @@ def get_model(cfg: Config, benchmark: ClassIncrementalBenchmark) -> FeatureRepla
     elif cfg.benchmark.model.name == "ResNet":
         if cfg.benchmark.dataset.name != "CIFAR100":
             raise ValueError("ResNet can only be used on CIFAR100 benchmarks.")
-        model = ResNet18(num_classes=benchmark.n_classes)
+        model = ResNet(
+            num_classes=benchmark.n_classes,
+            num_blocks=cfg.benchmark.model.num_blocks,
+            slim=cfg.benchmark.model.slim,
+        )
 
     else:
         raise NotImplementedError()
