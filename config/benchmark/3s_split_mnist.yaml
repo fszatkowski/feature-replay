@@ -1,0 +1,21 @@
+name: 3s_split_mnist
+desc: SplitMNIST scenario from "Three Scenarios for Continual Learning"
+dataset:
+  name: SplitMNIST
+  augmentations: false
+  padding: null
+  input_size: [ 1, 28, 28 ]
+n_experiences: 5
+model:
+  name: MLP
+  hidden_sizes: [ 400, 400 ]
+  dropout_ratio: 0.0
+hparams:
+  train_epochs: 22 # Paper states 2000 iterations per task, which is 21.33 epochs
+  train_mb_size: 128
+  replay_mb_size: null
+  eval_mb_size: 128
+  optimizer: Adam
+  b1: 0.9
+  b2: 0.999
+  lr: 0.001

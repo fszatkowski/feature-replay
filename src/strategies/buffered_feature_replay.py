@@ -4,8 +4,6 @@ import torch
 from avalanche.training.plugins import EvaluationPlugin, SupervisedPlugin
 from avalanche.training.plugins.evaluation import default_evaluator
 from avalanche.training.templates.supervised import SupervisedTemplate
-from torch.nn import CrossEntropyLoss
-from torch.optim import SGD
 
 from models.feature_replay_model import FeatureReplayModel
 from strategies.bfr.buffer_manager import RandomFeatureReplayManager
@@ -19,10 +17,8 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
         total_memory_size: int,
         replay_mb_sizes: Union[int, list[int]],
         replay_slowdown: float,
+        optimizer: torch.optim.Optimizer,
         criterion: Optional[torch.nn.Module],
-        lr: float,
-        momentum: float,
-        l2: float,
         train_epochs: int,
         train_mb_size: int,
         eval_mb_size: int,
@@ -35,7 +31,6 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
         Buffered replay strategy done at multiple feature levels.
         :param model: Any model implementing FeatureReplayModel interface.
         :param update_strategy: Replay update strategy.
-
         :param total_memory_size: Buffer sizes for each feature level in model. If set to 0,
         buffer is not created for given level.
         :param replay_mb_sizes: Replay minibatch sizes for each layer. Defaults to `train_mb_size`
@@ -43,18 +38,6 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
         :param replay_slowdown: Learning rate multiplier for layers below feature replay level.
         This update is slowed down to prevent changing earlier layers too fast.
         """
-        optimizer = SGD(
-            [{"params": layer.parameters(), "lr": lr} for layer in model.layers],
-            lr=lr,
-            momentum=momentum,
-            weight_decay=l2,
-        )
-        if criterion is None:
-            criterion = CrossEntropyLoss()
-        self.lr = lr
-        self.momentum = momentum
-        self.l2 = l2
-
         super().__init__(
             model,
             optimizer,
@@ -87,17 +70,6 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
     def _after_training_exp(self, **kwargs):
         self.buffers.after_training_exp(strategy=self)
         super()._after_training_exp(**kwargs)
-
-    def make_optimizer(self):
-        self.optimizer = SGD(
-            [
-                {"params": layer.parameters(), "lr": self.lr}
-                for layer in self.model.layers
-            ],
-            lr=self.lr,
-            momentum=self.momentum,
-            weight_decay=self.l2,
-        )
 
     def training_epoch(self, **kwargs):
         for self.mbatch in self.dataloader:
@@ -184,7 +156,7 @@ class BufferedFeatureReplayStrategy(SupervisedTemplate):
         """
         Computes replay probs for given strategy.
         :param update_strategy: Name of the update strategy.
-        :param total_memory_size: Memory size to distribte across strategies.
+        :param total_memory_size: Memory size to distribute across strategies.
         :param n_layers: Number of model layers.
         :return: Replay probabilities.
         """

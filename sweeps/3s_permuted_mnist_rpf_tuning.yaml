@@ -1,0 +1,22 @@
+program: src/train.py
+method: grid
+metric:
+  goal: maximize
+  name: Top1_Acc_Stream/eval_phase/test_stream/Task000
+parameters:
+  benchmark:
+    values: [ "3s_permuted_mnist" ]
+  strategy.base:
+    values: [ Naive ]
+  strategy.plugins:
+    values: [ [ replay, rpf ] ]
+  strategy.memory_size:
+    values: [ 2000 ]
+  strategy.rpf_probs:
+    values: [ [ 1.0, 0.0, 0.0 ], [ 0.5, 0.25, 0.25 ], [ 0.25, 0.5, 0.25 ], [ 0.25, 0.25, 0.5 ] ]
+
+command:
+  - ${env}
+  - python
+  - ${program}
+  - ${args_no_hyphens}

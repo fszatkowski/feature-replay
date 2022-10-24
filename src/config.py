@@ -3,35 +3,6 @@ from typing import Optional, Union
 
 
 @dataclass
-class Benchmark:
-    name: str
-    input_size: tuple[int, int, int]
-    n_classes: int
-    n_experiences: int
-    augmentations: bool
-
-
-@dataclass
-class Strategy:
-    name: str
-
-    # Buffer strategies strategy
-    memory_size: int
-
-    # FeatureBuffer strategy
-    replay_mb_size: Union[int, list[int]]
-    update_strategy: str
-    replay_slowdown: float
-
-    # LwF
-    alpha: float
-    temperature: float
-
-    # EWC
-    ewc_lambda: float
-
-
-@dataclass
 class Model:
     name: str
 
@@ -46,36 +17,102 @@ class Model:
 
 
 @dataclass
-class Optimizer:
-    name: str
+class TrainingHyperParameters:
+    # Training params
+    train_epochs: int
+    train_mb_size: int
+    replay_mb_size: Optional[int]
+    eval_mb_size: int
+
+    # Optimizer
+    optimizer: str
     lr: float
+    b1: float
+    b2: float
     momentum: float
     l2: float
 
 
 @dataclass
-class Training:
-    train_epochs: int
-    train_mb_size: int
-    eval_mb_size: int
-    optimizer: Optimizer
+class Dataset:
+    """
+    Dataset parameters
+    """
+
+    name: str
+    augmentations: bool
+    padding: Optional[Union[int, tuple[int, int], tuple[int, int, int, int]]]
+    input_size: tuple[int, int, int]
+    train_per_class_sample_limit: Optional[int]
+    test_per_class_sample_limit: Optional[int]
+
+
+@dataclass
+class Benchmark:
+    """
+    Benchmark to use.
+    """
+
+    name: str
+    dataset: Dataset
+    n_experiences: int
+    model: Model
+    hparams: TrainingHyperParameters
+
+
+@dataclass
+class Strategy:
+    """
+    Parameters of continual learning strategy
+    """
+
+    base: str
+    plugins: list[str]
+
+    # Memory size for strategies using replay
+    memory_size: int
+    constant_memory: bool  # If True, memory_size is per experience, otherwise it's constant
+
+    # EWC
+    ewc_lambda: float
+
+    # LwF
+    lwf_alpha: float
+    lwf_temperature: float
+
+    # RandomPartialFreezing
+    rpf_probs: list[float]
+
+    # FeatureBuffer
+    replay_mb_size: Union[int, list[int]]
+    update_strategy: str
+    replay_slowdown: float
 
 
 @dataclass
 class Wandb:
+    """
+    Wandb configuration
+    """
+
     enable: bool
     entity: str
     project: str
+    tags: Optional[list[str]]
 
 
 @dataclass
 class Config:
+    """
+    Experiment configuration
+    """
+
     benchmark: Benchmark
     strategy: Strategy
-    model: Model
-    training: Training
     wandb: Wandb
 
     seed: Optional[int]
     device: str
+    device_id: int
     output_dir: Optional[str]
+    save_model: bool

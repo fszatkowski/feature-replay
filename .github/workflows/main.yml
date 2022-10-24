@@ -46,4 +46,4 @@ jobs:
           mypy src tests
 
       - name: Run pytest
-        run: pytest tests
+        run: pytest -n 16 tests

@@ -33,7 +33,13 @@ python src/train.py \
   strategy=strategy.basic_buffer
 ```
 
-### Impact of data augmentations
+## Running sweeps
+Use wandb with sweeps from `sweeps` directory to run hyperparameter search:
+```shell
+wandb sweep sweeps/experiment.yaml
+```
+
+## Impact of data augmentations
 When comparing Buffered Feature Replay with Buffered Replay, data augmentations should be 
 disabled as augmentations for features from hidden layers are not implemented.
 To disable augmentations, you can use `strategy.augmentations=false`:

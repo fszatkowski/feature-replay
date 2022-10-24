@@ -1,0 +1,23 @@
+program: src/train.py
+method: grid
+metric:
+  goal: maximize
+  name: Top1_Acc_Stream/eval_phase/test_stream/Task000
+parameters:
+  benchmark:
+    values: ["3s_split_mnist"]
+  strategy.base:
+    values: [ Naive ]
+  strategy.plugins:
+    values: [ [ lwf ] ]
+  strategy.lwf_alpha:
+    values: [ 0.01, 0.1, 1, 10 ]
+  strategy.lwf_temperature:
+    values: [ 0.25, 0.5, 1, 2, 4 ]
+
+
+command:
+  - ${env}
+  - python
+  - ${program}
+  - ${args_no_hyphens}

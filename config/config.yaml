@@ -1,28 +1,31 @@
 defaults:
   - _self_
   - benchmark:
-    - split_fmnist
-  - strategy:
-    - naive
-  - model:
-    - mlp
+      - 3s_split_mnist
 
-training:
-  train_epochs: 5
-  train_mb_size: 128
-  eval_mb_size: 128
-  optimizer:
-    name: SGD
-    lr: 0.001
-    momentum: 0.9
-    l2: 0.0
+benchmark:
+  dataset:
+    train_per_class_sample_limit: null
+    test_per_class_sample_limit: null
+
+strategy:
+  base: Naive
+  plugins: [ ]
+  memory_size: 1000
+  constant_memory: true
+  ewc_lambda: 1.0
+  lwf_alpha: 1.0
+  lwf_temperature: 2.0
+  rpf_probs: [ 0.5, 0.5 ]
 
 wandb:
   enable: True
   entity: cl-probing
   project: feature-replay
+  tags: null
 
 output_dir: null
+save_model: false
 seed: 0
 device: cuda
 device_id: 0

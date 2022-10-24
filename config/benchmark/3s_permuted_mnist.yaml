@@ -1,0 +1,21 @@
+name: 3s_permuted_mnist
+desc: PermutedMNIST scenario from "Three Scenarios for Continual Learning"
+dataset:
+  name: PermutedMNIST
+  augmentations: false
+  padding: 2
+  input_size: [ 1, 32, 32 ]
+n_experiences: 10
+model:
+  name: MLP
+  hidden_sizes: [ 1000, 1000 ]
+  dropout_ratio: 0.0
+hparams:
+  train_epochs: 11 # Paper states 2000 iterations per task, which is 10.66 epochs
+  train_mb_size: 128
+  replay_mb_size: null
+  eval_mb_size: 128
+  optimizer: Adam
+  b1: 0.9
+  b2: 0.999
+  lr: 0.0001

@@ -1,6 +1,6 @@
 import torch
 
-from models.resnet import ResNet18
+from models.resnet18 import ResNet18
 
 
 def test_resnet_skip_first_inference() -> None:

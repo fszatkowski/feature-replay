@@ -1,9 +1,9 @@
 import os
+import time
 
 import omegaconf
 from avalanche.evaluation.metrics import (
     accuracy_metrics,
-    confusion_matrix_metrics,
     forgetting_metrics,
     loss_metrics,
 )
@@ -14,7 +14,10 @@ from config import Config
 
 
 def get_eval_plugin(cfg: Config) -> EvaluationPlugin:
-    run_name = f"{cfg.benchmark.name}_{cfg.strategy.name}_{cfg.model.name}"
+    strategy_name = cfg.strategy.base
+    if cfg.strategy.plugins:
+        strategy_name = "_" + "_".join(sorted(cfg.strategy.plugins))
+    run_name = f"{cfg.benchmark.name}_{strategy_name}-{time.strftime('%Y%m%d-%H%M%S')}"
     cfg_dict = omegaconf.OmegaConf.to_container(
         cfg, resolve=True, throw_on_missing=True
     )
@@ -23,32 +26,33 @@ def get_eval_plugin(cfg: Config) -> EvaluationPlugin:
 
     if cfg.wandb.enable:
         os.environ["WANDB_ENTITY"] = cfg.wandb.entity
+        params = {}
+        if cfg.wandb.tags is not None:
+            params["tags"] = cfg.wandb.tags
         wandb_logger = WandBLogger(
-            project_name=cfg.wandb.project, run_name=run_name, config=cfg_dict
+            project_name=cfg.wandb.project,
+            run_name=run_name,
+            config=cfg_dict,
+            params=params,
         )
         loggers.append(wandb_logger)
 
     eval_plugin = EvaluationPlugin(
         accuracy_metrics(
-            minibatch=True,
+            minibatch=False,
             epoch=True,
-            epoch_running=True,
+            epoch_running=False,
             experience=True,
             stream=True,
         ),
         loss_metrics(
-            minibatch=True,
+            minibatch=False,
             epoch=True,
-            epoch_running=True,
+            epoch_running=False,
             experience=True,
             stream=True,
         ),
         forgetting_metrics(experience=True, stream=True),
-        confusion_matrix_metrics(
-            stream=True,
-            wandb=cfg.wandb.enable,
-            class_names=[str(i) for i in range(cfg.benchmark.n_classes)],
-        ),
         loggers=loggers,
     )
 
