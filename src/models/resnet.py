@@ -6,24 +6,28 @@ from torch import nn
 from models.feature_replay_model import FeatureReplayModel
 
 
-class ResNet18(FeatureReplayModel):
+class ResNet(FeatureReplayModel):
     def __init__(
         self,
         num_classes: int,
         num_blocks: Optional[list[int]] = None,
-        nf: int = 20,
+        slim: bool = False,
     ):
         """
-        Avalanche ResNet implementation adapted for feature replay,
-        with defaults resulting in SlimResNet18 configuration.
-        :param num_classes: Number of clases to use.
-        :param num_blocks: Number of ResNet blocks to use per ResNet layer.
-        :param nf: Number of filters in first layer.
+        Avalanche ResNet implementation adapted for feature replay, with defaults resulting in
+        ResNet18 configuration.
+        :param num_classes: Number of classes to use.
+        :param num_blocks: Number of ResNet blocks to use per ResNet layer. Defaults to ResNet18.
+        :param slim: Whether to use slim variant with 20 input channels or default with 64..
         """
-        super(ResNet18, self).__init__()
+        super(ResNet, self).__init__()
         if num_blocks is None:
             num_blocks = [2, 2, 2, 2]
 
+        if slim:
+            nf = 20
+        else:
+            nf = 64
         self.in_planes = nf
 
         self.layers.add_module(

@@ -3,7 +3,7 @@ from commons import run_with_overrides
 
 
 def run_3s_permuted_mnist_test(overrides: list[str]) -> None:
-    run_with_overrides(["benchmark=3s_permuted_mnist"] + overrides)
+    run_with_overrides(["benchmark=facil_cifar100_10"] + overrides)
 
 
 @pytest.mark.e2e

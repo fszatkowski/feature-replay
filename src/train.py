@@ -8,9 +8,9 @@ import hydra
 import numpy as np
 import omegaconf
 import torch
+import wandb
 from omegaconf import OmegaConf
 
-import wandb
 from benchmarks.ci import ClassIncrementalBenchmark
 from config import Config
 from models.utils import get_model
