@@ -2,28 +2,38 @@ import pytest
 from commons import run_with_overrides
 
 
-def run_3s_permuted_mnist_test(overrides: list[str]) -> None:
+def run_3s_facil_cifar100_10_test(overrides: list[str]) -> None:
     run_with_overrides(["benchmark=facil_cifar100_10"] + overrides)
 
 
 @pytest.mark.e2e
-def test_3s_permuted_mnist_default() -> None:
-    run_3s_permuted_mnist_test([])
+def test_3s_facil_cifar100_10_default() -> None:
+    run_3s_facil_cifar100_10_test([])
 
 
 @pytest.mark.e2e
-def test_3s_permuted_mnist_naive() -> None:
-    run_3s_permuted_mnist_test(["strategy.base=Naive"])
+def test_3s_facil_cifar100_10_naive() -> None:
+    run_3s_facil_cifar100_10_test(["strategy.base=Naive"])
 
 
 @pytest.mark.e2e
-def test_3s_permuted_mnist_cumulative() -> None:
-    run_3s_permuted_mnist_test(["strategy.base=Cumulative"])
+def test_3s_facil_cifar100_10_rpf() -> None:
+    run_3s_facil_cifar100_10_test(
+        [
+            "strategy.base=RandomPartialFreezing",
+            "strategy.rpf_probs=[0.5,0.1,0.1,0.1,0.1,0.1]",
+        ]
+    )
 
 
 @pytest.mark.e2e
-def test_3s_permuted_mnist_replay_const_memory() -> None:
-    run_3s_permuted_mnist_test(
+def test_3s_facil_cifar100_10_cumulative() -> None:
+    run_3s_facil_cifar100_10_test(["strategy.base=Cumulative"])
+
+
+@pytest.mark.e2e
+def test_3s_facil_cifar100_10_replay_const_memory() -> None:
+    run_3s_facil_cifar100_10_test(
         [
             "strategy.base=Naive",
             "strategy.plugins=[replay]",
@@ -33,8 +43,8 @@ def test_3s_permuted_mnist_replay_const_memory() -> None:
 
 
 @pytest.mark.e2e
-def test_3s_permuted_mnist_replay_adaptive_memory() -> None:
-    run_3s_permuted_mnist_test(
+def test_3s_facil_cifar100_10_replay_adaptive_memory() -> None:
+    run_3s_facil_cifar100_10_test(
         [
             "strategy.base=Naive",
             "strategy.plugins=[replay]",
@@ -44,8 +54,8 @@ def test_3s_permuted_mnist_replay_adaptive_memory() -> None:
 
 
 @pytest.mark.e2e
-def test_3s_permuted_mnist_gdumb() -> None:
-    run_3s_permuted_mnist_test(
+def test_3s_facil_cifar100_10_gdumb() -> None:
+    run_3s_facil_cifar100_10_test(
         [
             "benchmark=3s_split_mnist",
             "strategy.base=Naive",
@@ -55,8 +65,8 @@ def test_3s_permuted_mnist_gdumb() -> None:
 
 
 @pytest.mark.e2e
-def test_3s_permuted_mnist_ewc() -> None:
-    run_3s_permuted_mnist_test(
+def test_3s_facil_cifar100_10_ewc() -> None:
+    run_3s_facil_cifar100_10_test(
         [
             "strategy.base=Naive",
             "strategy.plugins=[ewc]",
@@ -66,8 +76,8 @@ def test_3s_permuted_mnist_ewc() -> None:
 
 
 @pytest.mark.e2e
-def test_3s_permuted_mnist_lwf() -> None:
-    run_3s_permuted_mnist_test(
+def test_3s_facil_cifar100_10_lwf() -> None:
+    run_3s_facil_cifar100_10_test(
         [
             "strategy.base=Naive",
             "strategy.plugins=[lwf]",

@@ -87,11 +87,6 @@ class Strategy:
     # RandomPartialFreezing
     rpf_probs: list[float]
 
-    # FeatureBuffer
-    replay_mb_size: Union[int, list[int]]
-    update_strategy: str
-    replay_slowdown: float
-
 
 @dataclass
 class Wandb:
