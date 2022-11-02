@@ -80,7 +80,9 @@ class RandomPartialFreezingStrategy(SupervisedTemplate):
         super()._after_training_exp(**kwargs)
         self.buffer.update(strategy=self)
         self.replay_dataloader = DataLoader(
-            self.buffer.buffer, batch_size=self.replay_mb_size, shuffle=True
+            self.buffer.buffer,
+            batch_size=self.replay_mb_size,
+            shuffle=True,
         )
         self.replay_dl_iterator = iter(self.replay_dataloader)
 

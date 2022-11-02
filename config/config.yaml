@@ -23,6 +23,7 @@ wandb:
   entity: cl-probing
   project: feature-replay
   tags: null
+  name: null
 
 output_dir: null
 save_model: false
