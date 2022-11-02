@@ -14,10 +14,6 @@ from config import Config
 
 
 def get_eval_plugin(cfg: Config) -> EvaluationPlugin:
-    strategy_name = cfg.strategy.base
-    if cfg.strategy.plugins:
-        strategy_name = "_" + "_".join(sorted(cfg.strategy.plugins))
-    run_name = f"{cfg.benchmark.name}_{strategy_name}-{time.strftime('%Y%m%d-%H%M%S')}"
     cfg_dict = omegaconf.OmegaConf.to_container(
         cfg, resolve=True, throw_on_missing=True
     )
@@ -29,6 +25,17 @@ def get_eval_plugin(cfg: Config) -> EvaluationPlugin:
         params = {}
         if cfg.wandb.tags is not None:
             params["tags"] = cfg.wandb.tags
+
+        if cfg.wandb.name is None:
+            strategy_name = cfg.strategy.base
+            if cfg.strategy.plugins:
+                strategy_name = "_" + "_".join(sorted(cfg.strategy.plugins))
+            run_name = (
+                f"{cfg.benchmark.name}_{strategy_name}-{time.strftime('%Y%m%d-%H%M%S')}"
+            )
+        else:
+            run_name = cfg.wandb.name
+
         wandb_logger = WandBLogger(
             project_name=cfg.wandb.project,
             run_name=run_name,

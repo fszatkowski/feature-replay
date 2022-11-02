@@ -49,7 +49,7 @@ python src/train.py \
 python src/train.py \
   benchmark=${BENCHMARK} \
   strategy.base=Naive \
-  strategy.plugins=[ewc"] \
+  strategy.plugins=[ewc] \
   strategy.EWC_LAMBDA=${EWC_LAMBDA} \
   wandb.tags=${TAGS}
 
