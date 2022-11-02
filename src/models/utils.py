@@ -3,7 +3,7 @@ from config import Config
 from models.conv_mlp import ConvMLP
 from models.feature_replay_model import FeatureReplayModel
 from models.mlp import MLP
-from models.resnet import ResNet
+from models.resnet import ResNet18, ResNet32, SlimResNet18
 
 
 def get_model(cfg: Config, benchmark: ClassIncrementalBenchmark) -> FeatureReplayModel:
@@ -29,13 +29,19 @@ def get_model(cfg: Config, benchmark: ClassIncrementalBenchmark) -> FeatureRepla
             dropout_ratio=cfg.benchmark.model.dropout_ratio,
         )
 
-    elif cfg.benchmark.model.name == "ResNet":
-        if cfg.benchmark.dataset.name != "CIFAR100":
-            raise ValueError("ResNet can only be used on CIFAR100 benchmarks.")
-        model = ResNet(
+    elif cfg.benchmark.model.name == "ResNet18":
+        model = ResNet18(
             num_classes=benchmark.n_classes,
-            num_blocks=cfg.benchmark.model.num_blocks,
-            slim=cfg.benchmark.model.slim,
+        )
+
+    elif cfg.benchmark.model.name == "SlimResNet18":
+        model = SlimResNet18(
+            num_classes=benchmark.n_classes,
+        )
+
+    elif cfg.benchmark.model.name == "ResNet32":
+        model = ResNet32(
+            num_classes=benchmark.n_classes,
         )
 
     else:
