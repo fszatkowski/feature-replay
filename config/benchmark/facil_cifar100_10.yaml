@@ -7,9 +7,7 @@ dataset:
   input_size: [ 3, 32, 32 ]
 n_experiences: 10
 model:
-  name: ResNet
-  num_blocks: [ 2, 2, 2, 2 ]
-  slim: False
+  name: ResNet32
 hparams:
   train_epochs: 200
   train_mb_size: 128

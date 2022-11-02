@@ -15,10 +15,6 @@ class Model:
     kernel_size: int
     pooling: bool
 
-    # ResNet
-    num_blocks: list[int]
-    slim: bool
-
 
 @dataclass
 class TrainingHyperParameters:
