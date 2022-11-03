@@ -50,31 +50,37 @@ class ClassIncrementalBenchmark:
             input_size = (3, 32, 32)
             train_transform = deepcopy(_default_cifar100_train_transform)
             eval_transform = deepcopy(_default_cifar100_eval_transform)
+            fixed_class_order = list(range(100))
         elif cfg.benchmark.dataset.name == "PermutedMNIST":
             scenario = PermutedMNIST
             input_size = (1, 28, 28)
             train_transform = deepcopy(_default_mnist_train_transform)
             eval_transform = deepcopy(_default_mnist_eval_transform)
+            fixed_class_order = None
         elif cfg.benchmark.dataset.name == "SplitFMNIST":
             scenario = SplitFMNIST
             input_size = (1, 28, 28)
             train_transform = deepcopy(_default_fmnist_train_transform)
             eval_transform = deepcopy(_default_fmnist_eval_transform)
+            fixed_class_order = None
         elif cfg.benchmark.dataset.name == "SplitMNIST":
             scenario = SplitMNIST
             input_size = (1, 28, 28)
             train_transform = deepcopy(_default_mnist_train_transform)
             eval_transform = deepcopy(_default_mnist_eval_transform)
+            fixed_class_order = None
         elif cfg.benchmark.dataset.name == "SplitOmniglot":
             scenario = SplitOmniglot
             input_size = (1, 105, 105)
             train_transform = deepcopy(_default_omniglot_train_transform)
             eval_transform = deepcopy(_default_omniglot_eval_transform)
+            fixed_class_order = None
         elif cfg.benchmark.dataset.name == "SplitTinyImageNet":
             scenario = SplitTinyImageNet
             input_size = (3, 64, 64)
             train_transform = deepcopy(_default_tinyimagenet_train_transform)
             eval_transform = deepcopy(_default_imagenet_eval_transform)
+            fixed_class_order = None
         else:
             raise NotImplementedError()
 
@@ -89,12 +95,17 @@ class ClassIncrementalBenchmark:
 
         self.name = cfg.benchmark.name
         self.input_size = input_size
-        benchmark = scenario(
+
+        kwargs = dict(
             n_experiences=cfg.benchmark.n_experiences,
             seed=cfg.seed,
             train_transform=train_transform,
             eval_transform=eval_transform,
         )
+        if cfg.benchmark.name == "PermutedMNIST":
+            kwargs["fixed_class_order"] = fixed_class_order
+
+        benchmark = scenario(**kwargs)
         train_sample_limit = cfg.benchmark.dataset.train_per_class_sample_limit
         test_sample_limit = cfg.benchmark.dataset.test_per_class_sample_limit
         if train_sample_limit is not None or test_sample_limit is not None:

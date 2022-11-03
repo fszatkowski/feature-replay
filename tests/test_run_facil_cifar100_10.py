@@ -21,7 +21,7 @@ def test_3s_facil_cifar100_10_rpf() -> None:
     run_3s_facil_cifar100_10_test(
         [
             "strategy.base=RandomPartialFreezing",
-            "strategy.rpf_probs=[0.5,0.1,0.1,0.1,0.1,0.1]",
+            "strategy.rpf_probs=[0.6,0.1,0.1,0.1,0.1]",
         ]
     )
 
