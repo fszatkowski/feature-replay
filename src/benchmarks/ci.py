@@ -90,7 +90,9 @@ class ClassIncrementalBenchmark:
             eval_transform.transforms.append(Pad(padding, padding_mode="edge"))
             input_size = cfg.benchmark.dataset.input_size
 
-        if cfg.benchmark.dataset.augmentations:
+        if not cfg.benchmark.dataset.augmentations:
+            # Some datasets can use data augmentations by default in train_transform,
+            # if don't want augmentations we can use eval_transform for both train and eval set
             train_transform = eval_transform
 
         self.name = cfg.benchmark.name
@@ -102,7 +104,7 @@ class ClassIncrementalBenchmark:
             train_transform=train_transform,
             eval_transform=eval_transform,
         )
-        if cfg.benchmark.name == "PermutedMNIST":
+        if cfg.benchmark.dataset.name != "PermutedMNIST":
             kwargs["fixed_class_order"] = fixed_class_order
 
         benchmark = scenario(**kwargs)
